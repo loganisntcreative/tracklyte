@@ -1,3 +1,4 @@
+from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -7,6 +8,17 @@ from app.email import send_verification_email
 import secrets
 
 auth = Blueprint('auth', __name__)
+
+
+def verified_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_verified:
+            flash('Please verify your email first.', 'error')
+            return redirect(url_for('auth.verify_pending'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
@@ -44,9 +56,7 @@ def register():
 
         login_user(user)
         flash('Account created! Check your email to verify your account.', 'success')
-        if user.role == 'athlete':
-            return redirect(url_for('profile.setup'))
-        return redirect(url_for('coach.setup'))
+        return redirect(url_for('auth.verify_pending'))
 
     return render_template('auth/register.html')
 
@@ -62,7 +72,19 @@ def verify_email(token):
     user.verification_token = None
     db.session.commit()
     flash('Email verified! Your account is fully active.', 'success')
-    return redirect(url_for('main.index'))
+    if user.role == 'athlete':
+        return redirect(url_for('profile.setup'))
+    return redirect(url_for('coach.setup'))
+
+
+@auth.route('/verify-pending')
+@login_required
+def verify_pending():
+    if current_user.is_verified:
+        if current_user.role == 'athlete':
+            return redirect(url_for('profile.setup'))
+        return redirect(url_for('coach.setup'))
+    return render_template('auth/verify_pending.html')
 
 
 @auth.route('/resend-verification')
@@ -83,7 +105,7 @@ def resend_verification():
     else:
         flash('Could not send email. Try again later.', 'error')
 
-    return redirect(url_for('main.index'))
+    return redirect(url_for('auth.verify_pending'))
 
 
 @auth.route('/login', methods=['GET', 'POST'])

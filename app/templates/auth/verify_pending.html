@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Verify your email — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-sm mx-auto mt-10">
+    <div class="bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <div class="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" fill="none" stroke="#B45309" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <h1 class="text-xl font-semibold mb-2">Check your email</h1>
+        <p class="text-sm text-gray-500 mb-6 leading-relaxed">
+            We sent a verification link to <strong>{{ current_user.email }}</strong>. 
+            Click the link in that email to activate your account and set up your profile.
+        </p>
+        <p class="text-xs text-gray-400 mb-6">Check your spam folder if you don't see it.</p>
+        <a href="/resend-verification"
+            class="block w-full bg-brand-400 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors">
+            Resend verification email
+        </a>
+        <a href="/logout" class="block text-sm text-gray-400 hover:text-gray-600 mt-4">
+            Sign out
+        </a>
+    </div>
+</div>
+{% endblock %}
