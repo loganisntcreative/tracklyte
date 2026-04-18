@@ -2,7 +2,11 @@ import os
 import sendgrid
 from sendgrid.helpers.mail import Mail
 
-def send_verification_email(to_email, verification_url):
+
+def send_verification_email(to_email, token):
+    app_url = os.environ.get('APP_URL', 'http://127.0.0.1:5000')
+    verification_url = f"{app_url}/verify/{token}"
+
     sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
     from_email = os.environ.get('SENDGRID_FROM_EMAIL')
 

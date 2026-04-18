@@ -51,8 +51,7 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        verification_url = url_for('auth.verify_email', token=token, _external=True)
-        send_verification_email(email, verification_url)
+        send_verification_email(email, token)
 
         login_user(user)
         flash('Account created! Check your email to verify your account.', 'success')
@@ -97,8 +96,7 @@ def resend_verification():
     current_user.verification_token = token
     db.session.commit()
 
-    verification_url = url_for('auth.verify_email', token=token, _external=True)
-    success = send_verification_email(current_user.email, verification_url)
+    success = send_verification_email(current_user.email, token)
 
     if success:
         flash('Verification email resent! Check your inbox.', 'success')

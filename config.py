@@ -8,4 +8,4 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
-    SERVER_NAME = os.environ.get('SERVER_NAME')
+    APP_URL = os.environ.get('APP_URL') or 'http://127.0.0.1:5000'
