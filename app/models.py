@@ -12,6 +12,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100), unique=True)
 
     athlete_profile = db.relationship('AthleteProfile', backref='user', uselist=False)
     coach_profile = db.relationship('CoachProfile', backref='user', uselist=False)
@@ -59,7 +61,7 @@ class PersonalBest(db.Model):
     date_achieved = db.Column(db.Date)
     meet_name = db.Column(db.String(100))
     media_url = db.Column(db.String(500))
-    media_type = db.Column(db.String(10))  # 'image' or 'video'
+    media_type = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
