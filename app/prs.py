@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db, cache
 from app.models import PersonalBest
+from app.auth import verified_required
 from datetime import date
 import cloudinary
 import cloudinary.uploader
@@ -34,6 +35,7 @@ def allowed_file(filename):
 
 @prs_bp.route('/prs/add', methods=['GET', 'POST'])
 @login_required
+@verified_required
 def add():
     if current_user.role != 'athlete':
         return redirect(url_for('main.index'))
@@ -98,6 +100,7 @@ def history():
 
 @prs_bp.route('/prs/delete/<int:pr_id>', methods=['POST'])
 @login_required
+@verified_required
 def delete(pr_id):
     pr = PersonalBest.query.get_or_404(pr_id)
     if pr.athlete.user_id != current_user.id:
