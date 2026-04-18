@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Log a PR — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">Log a PR</h1>
+        <a href="/prs" class="text-sm text-gray-500 hover:text-gray-800">← All PRs</a>
+    </div>
+
+    <form method="POST" action="/prs/add">
+        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1">Event</label>
+                <select name="event" required
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <option value="">Select event...</option>
+                    {% for event in events %}
+                        <option value="{{ event }}">{{ event }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1">Time / distance / height</label>
+                <input type="text" name="time_recorded" required
+                    placeholder="e.g. 10.45 or 1:52.30 or 6-04"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <p class="text-xs text-gray-400 mt-1">Use whatever format matches your event — seconds, min:sec, or feet-inches.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1">Date achieved</label>
+                <input type="date" name="date_achieved" value="{{ today }}"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Meet name <span class="text-gray-400">(optional)</span></label>
+                <input type="text" name="meet_name"
+                    placeholder="e.g. CIF State Championships"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            </div>
+
+        </div>
+
+        <button type="submit"
+            class="w-full bg-emerald-600 text-white py-3 rounded-lg text-sm font-medium hover:bg-emerald-700">
+            Save PR
+        </button>
+    </form>
+</div>
+{% endblock %}

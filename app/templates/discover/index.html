@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Discover athletes — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold">Discover athletes</h1>
+        <p class="text-sm text-gray-500 mt-1">Filter by event, grad year, or state</p>
+    </div>
+
+    <form method="GET" action="/discover"
+        class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Event</label>
+            <select name="event"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="">All events</option>
+                {% for event in events %}
+                    <option value="{{ event }}" {% if event == event_filter %}selected{% endif %}>{{ event }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Grad year</label>
+            <select name="grad_year"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="">All years</option>
+                {% for year in grad_years %}
+                    <option value="{{ year }}" {% if year|string == year_filter %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">State</label>
+            <select name="state"
+                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="">All states</option>
+                {% for state in states %}
+                    <option value="{{ state }}" {% if state == state_filter %}selected{% endif %}>{{ state }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit"
+            class="bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+            Search
+        </button>
+        {% if event_filter or year_filter or state_filter %}
+            <a href="/discover"
+                class="text-sm text-gray-400 hover:text-gray-600 self-center">
+                Clear filters
+            </a>
+        {% endif %}
+    </form>
+
+    <p class="text-sm text-gray-500 mb-4">
+        {{ result_count }} athlete{{ 's' if result_count != 1 else '' }} found
+    </p>
+
+    {% if not athlete_data %}
+        <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+            <p class="text-gray-400">No athletes match your filters. Try broadening your search.</p>
+        </div>
+    {% else %}
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {% for item in athlete_data %}
+            <a href="/athlete/{{ item.athlete.id }}"
+                class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors
+                {% if not loop.last %}border-b border-gray-100{% endif %}">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm flex-shrink-0">
+                        {{ item.athlete.first_name[0] }}{{ item.athlete.last_name[0] }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">
+                            {{ item.athlete.first_name }} {{ item.athlete.last_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ item.athlete.school }} · Class of {{ item.athlete.grad_year }} · {{ item.athlete.state }}
+                        </p>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            {% for event in item.events_list[:3] %}
+                                <span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full">{{ event }}</span>
+                            {% endfor %}
+                            {% if item.events_list|length > 3 %}
+                                <span class="text-xs text-gray-400">+{{ item.events_list|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if item.best_pr %}
+                <div class="text-right flex-shrink-0 ml-4">
+                    <p class="text-lg font-medium text-gray-900">{{ item.best_pr.time_recorded }}</p>
+                    <p class="text-xs text-gray-400">{{ item.best_pr.event }}</p>
+                </div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

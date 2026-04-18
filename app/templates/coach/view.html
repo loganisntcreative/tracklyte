@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ coach.first_name }} {{ coach.last_name }} — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white border border-gray-200 rounded-xl p-8">
+
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-700 font-medium text-xl">
+                    {{ coach.first_name[0] }}{{ coach.last_name[0] }}
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold">{{ coach.first_name }} {{ coach.last_name }}</h1>
+                    <p class="text-sm text-gray-500">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
+                </div>
+            </div>
+            <a href="/coach/profile/edit"
+                class="text-sm border border-gray-200 rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-50">
+                Edit profile
+            </a>
+        </div>
+
+        {% if coach.bio %}
+        <div class="mb-6">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">About</p>
+            <p class="text-sm text-gray-600 leading-relaxed">{{ coach.bio }}</p>
+        </div>
+        {% endif %}
+
+        <div class="bg-gray-50 rounded-xl p-5">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Program details</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Institution</p>
+                    <p class="text-gray-800 font-medium">{{ coach.school or '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Division / level</p>
+                    <p class="text-gray-800 font-medium">{{ coach.college or '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">State</p>
+                    <p class="text-gray-800 font-medium">{{ coach.state or '—' }}</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

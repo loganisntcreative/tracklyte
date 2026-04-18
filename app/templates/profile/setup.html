@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Set up your profile — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-1">Set up your athlete profile</h1>
+    <p class="text-gray-500 text-sm mb-8">This is what coaches will see when they discover you.</p>
+
+    <form method="POST" action="/profile/setup">
+        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Basic info</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">First name</label>
+                    <input type="text" name="first_name" required
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Last name</label>
+                    <input type="text" name="last_name" required
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1">High school name</label>
+                <input type="text" name="school" required placeholder="e.g. Westview High School"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Graduation year</label>
+                    <select name="grad_year" required
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                        {% for year in grad_years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">State</label>
+                    <select name="state" required
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                        <option value="">Select...</option>
+                        {% for state in states %}
+                            <option value="{{ state }}">{{ state }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Events <span class="text-gray-400 font-normal normal-case">(select all that apply)</span></h2>
+            <div class="flex flex-wrap gap-2">
+                {% for event in events %}
+                <label class="cursor-pointer">
+                    <input type="checkbox" name="events" value="{{ event }}" class="sr-only peer">
+                    <span class="peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 border border-gray-200 rounded-full px-3 py-1 text-sm text-gray-600 hover:border-emerald-400 transition-colors">
+                        {{ event }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Bio</h2>
+            <textarea name="bio" rows="4" placeholder="Tell coaches about yourself — your goals, achievements, what makes you stand out..."
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"></textarea>
+        </div>
+
+        <button type="submit"
+            class="w-full bg-emerald-600 text-white py-3 rounded-lg text-sm font-medium hover:bg-emerald-700">
+            Create my profile
+        </button>
+    </form>
+</div>
+{% endblock %}

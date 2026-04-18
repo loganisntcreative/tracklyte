@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ athlete.first_name }} {{ athlete.last_name }} — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <a href="/discover" class="text-sm text-gray-500 hover:text-gray-800 mb-6 inline-block">← Back to discover</a>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-8">
+
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-xl">
+                {{ athlete.first_name[0] }}{{ athlete.last_name[0] }}
+            </div>
+            <div>
+                <h1 class="text-xl font-semibold">{{ athlete.first_name }} {{ athlete.last_name }}</h1>
+                <p class="text-sm text-gray-500">
+                    {{ athlete.school }} · Class of {{ athlete.grad_year }} · {{ athlete.state }}
+                </p>
+            </div>
+        </div>
+
+        {% if athlete.events %}
+        <div class="mb-6">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Events</p>
+            <div class="flex flex-wrap gap-2">
+                {% for event in athlete.events.split(',') %}
+                    <span class="bg-emerald-50 text-emerald-700 text-sm px-3 py-1 rounded-full">{{ event }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if athlete.bio %}
+        <div class="mb-6">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Bio</p>
+            <p class="text-sm text-gray-600 leading-relaxed">{{ athlete.bio }}</p>
+        </div>
+        {% endif %}
+
+        <div>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Personal bests</p>
+            {% if not grouped_prs %}
+                <p class="text-sm text-gray-400 italic">No PRs logged yet.</p>
+            {% else %}
+                {% for event, prs in grouped_prs.items() %}
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 font-medium mb-2">{{ event }}</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for pr in prs %}
+                        <div class="bg-gray-50 rounded-lg px-4 py-3">
+                            <p class="text-lg font-medium text-gray-900">{{ pr.time_recorded }}</p>
+                            {% if pr.meet_name %}
+                                <p class="text-xs text-gray-500 mt-0.5">{{ pr.meet_name }}</p>
+                            {% endif %}
+                            {% if pr.date_achieved %}
+                                <p class="text-xs text-gray-400">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
