@@ -1,11 +1,19 @@
-from app import cache
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from app import db
+from app import db, cache
 from app.models import PersonalBest
 from datetime import date
+import cloudinary
+import cloudinary.uploader
+import os
 
 prs_bp = Blueprint('prs', __name__)
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
 
 TRACK_EVENTS = [
     '100m', '200m', '400m', '800m', '1500m', 'Mile',
@@ -18,6 +26,12 @@ TRACK_EVENTS = [
     'Heptathlon', 'Decathlon'
 ]
 
+ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'jpg', 'jpeg', 'png', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @prs_bp.route('/prs/add', methods=['GET', 'POST'])
 @login_required
 def add():
@@ -27,15 +41,37 @@ def add():
         return redirect(url_for('profile.setup'))
 
     if request.method == 'POST':
+        media_url = None
+        media_type = None
+
+        file = request.files.get('media')
+        if file and file.filename and allowed_file(file.filename):
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            resource_type = 'video' if ext in {'mp4', 'mov', 'avi'} else 'image'
+            try:
+                result = cloudinary.uploader.upload(
+                    file,
+                    resource_type=resource_type,
+                    folder='tracklyte'
+                )
+                media_url = result['secure_url']
+                media_type = 'video' if resource_type == 'video' else 'image'
+            except Exception as e:
+                flash(f'Media upload failed: {str(e)}', 'error')
+                return redirect(url_for('prs.add'))
+
         pr = PersonalBest(
             athlete_id=current_user.athlete_profile.id,
             event=request.form.get('event'),
             time_recorded=request.form.get('time_recorded', '').strip(),
             date_achieved=date.fromisoformat(request.form.get('date_achieved')) if request.form.get('date_achieved') else None,
-            meet_name=request.form.get('meet_name', '').strip() or None
+            meet_name=request.form.get('meet_name', '').strip() or None,
+            media_url=media_url,
+            media_type=media_type
         )
         db.session.add(pr)
         db.session.commit()
+        cache.clear()
         flash('PR logged!', 'success')
         return redirect(url_for('prs.history'))
 
@@ -69,5 +105,6 @@ def delete(pr_id):
         return redirect(url_for('prs.history'))
     db.session.delete(pr)
     db.session.commit()
+    cache.clear()
     flash('PR deleted.', 'success')
     return redirect(url_for('prs.history'))

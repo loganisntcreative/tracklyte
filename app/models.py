@@ -10,7 +10,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'athlete' or 'coach'
+    role = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     athlete_profile = db.relationship('AthleteProfile', backref='user', uselist=False)
@@ -28,7 +28,7 @@ class AthleteProfile(db.Model):
     school = db.Column(db.String(100))
     grad_year = db.Column(db.Integer)
     state = db.Column(db.String(50))
-    events = db.Column(db.String(200))  # e.g. "100m,200m,400m"
+    events = db.Column(db.String(200))
     bio = db.Column(db.Text)
 
     personal_bests = db.relationship('PersonalBest', backref='athlete', lazy='dynamic')
@@ -54,10 +54,12 @@ class CoachProfile(db.Model):
 class PersonalBest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     athlete_id = db.Column(db.Integer, db.ForeignKey('athlete_profile.id'), nullable=False)
-    event = db.Column(db.String(50), nullable=False)   # e.g. "100m", "400m", "High Jump"
-    time_recorded = db.Column(db.String(20), nullable=False)  # e.g. "10.45" or "1:52.30"
+    event = db.Column(db.String(50), nullable=False)
+    time_recorded = db.Column(db.String(20), nullable=False)
     date_achieved = db.Column(db.Date)
     meet_name = db.Column(db.String(100))
+    media_url = db.Column(db.String(500))
+    media_type = db.Column(db.String(10))  # 'image' or 'video'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

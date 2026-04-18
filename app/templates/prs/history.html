@@ -30,25 +30,38 @@
             </div>
             <div class="divide-y divide-gray-50">
                 {% for pr in prs %}
-                <div class="px-5 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <span class="text-xl font-medium text-gray-900 w-24">{{ pr.time_recorded }}</span>
-                        <div>
-                            {% if pr.meet_name %}
-                                <p class="text-sm text-gray-600">{{ pr.meet_name }}</p>
-                            {% endif %}
-                            {% if pr.date_achieved %}
-                                <p class="text-xs text-gray-400">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>
-                            {% endif %}
+                <div class="px-5 py-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xl font-medium text-gray-900 w-24">{{ pr.time_recorded }}</span>
+                            <div>
+                                {% if pr.meet_name %}
+                                    <p class="text-sm text-gray-600">{{ pr.meet_name }}</p>
+                                {% endif %}
+                                {% if pr.date_achieved %}
+                                    <p class="text-xs text-gray-400">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>
+                                {% endif %}
+                            </div>
                         </div>
+                        <form method="POST" action="/prs/delete/{{ pr.id }}"
+                            onsubmit="return confirm('Delete this PR?')">
+                            <button type="submit"
+                                class="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                                Delete
+                            </button>
+                        </form>
                     </div>
-                    <form method="POST" action="/prs/delete/{{ pr.id }}"
-                        onsubmit="return confirm('Delete this PR?')">
-                        <button type="submit"
-                            class="text-xs text-gray-400 hover:text-red-500 transition-colors">
-                            Delete
-                        </button>
-                    </form>
+                    {% if pr.media_url %}
+                        {% if pr.media_type == 'video' %}
+                            <video controls
+                                class="w-full rounded-lg max-h-64 bg-black"
+                                src="{{ pr.media_url }}">
+                            </video>
+                        {% else %}
+                            <img src="{{ pr.media_url }}" alt="{{ pr.event }} media"
+                                class="w-full rounded-lg max-h-64 object-cover">
+                        {% endif %}
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
