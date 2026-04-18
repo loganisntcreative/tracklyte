@@ -1,4 +1,5 @@
 import os
+WTF_CSRF_ENABLED = True
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-this-later'

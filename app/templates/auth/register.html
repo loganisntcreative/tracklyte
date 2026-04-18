@@ -9,6 +9,7 @@
     </div>
     <div class="bg-white border border-gray-200 rounded-xl p-8">
         <form method="POST" action="/register">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-5">
                 <label class="block text-sm text-gray-600 mb-2">I am a...</label>
                 <div class="flex gap-3">

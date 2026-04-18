@@ -9,6 +9,7 @@
     </div>
     <div class="bg-white border border-gray-200 rounded-xl p-8">
         <form method="POST" action="/login">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-4">
                 <label class="block text-sm text-gray-600 mb-1.5">Email</label>
                 <input type="email" name="email" required autofocus

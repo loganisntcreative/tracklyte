@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import User
+from app import limiter
 
 auth = Blueprint('auth', __name__)
 
@@ -41,8 +42,8 @@ def register():
 
     return render_template('auth/register.html')
 
-
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))

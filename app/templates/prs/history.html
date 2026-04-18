@@ -45,6 +45,7 @@
                         </div>
                         <form method="POST" action="/prs/delete/{{ pr.id }}"
                             onsubmit="return confirm('Delete this PR?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit"
                                 class="text-xs text-gray-400 hover:text-red-500 transition-colors">
                                 Delete

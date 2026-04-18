@@ -9,6 +9,7 @@
     </div>
 
     <form method="POST" action="/prs/add" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
 
             <div class="mb-4">
