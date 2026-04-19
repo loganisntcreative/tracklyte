@@ -1,8 +1,9 @@
-from app import cache
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from app import db
-from app.models import AthleteProfile
+from app import db, cache
+from app.models import AthleteProfile, PersonalBest
+from app.auth import verified_required
+import json
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -25,8 +26,29 @@ US_STATES = [
     'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
 ]
 
+def build_chart_data(athlete):
+    all_prs = athlete.personal_bests.filter(
+        PersonalBest.date_achieved != None
+    ).order_by(PersonalBest.date_achieved.asc()).all()
+
+    grouped = {}
+    for pr in all_prs:
+        grouped.setdefault(pr.event, []).append(pr)
+
+    charts = {}
+    for event, prs in grouped.items():
+        if len(prs) < 2:
+            continue
+        charts[event] = {
+            'labels': [pr.date_achieved.strftime('%b %d, %Y') for pr in prs],
+            'values': [pr.time_recorded for pr in prs]
+        }
+    return json.dumps(charts)
+
+
 @profile_bp.route('/profile/setup', methods=['GET', 'POST'])
 @login_required
+@verified_required
 def setup():
     if current_user.role != 'athlete':
         return redirect(url_for('main.index'))
@@ -66,11 +88,14 @@ def view():
 
     athlete = current_user.athlete_profile
     athlete_events = athlete.events.split(',') if athlete.events else []
-    return render_template('profile/view.html', athlete=athlete, athlete_events=athlete_events)
+    chart_data = build_chart_data(athlete)
+    return render_template('profile/view.html', athlete=athlete,
+                           athlete_events=athlete_events, chart_data=chart_data)
 
 
 @profile_bp.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
+@verified_required
 def edit():
     if current_user.role != 'athlete':
         return redirect(url_for('main.index'))

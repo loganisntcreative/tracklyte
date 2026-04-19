@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
 from app.models import AthleteProfile, PersonalBest
 from app import cache
+from app.profile import build_chart_data
+import json
 
 discover_bp = Blueprint('discover', __name__)
 
@@ -93,9 +95,12 @@ def athlete_profile(athlete_id):
     for pr in all_prs:
         grouped_prs.setdefault(pr.event, []).append(pr)
 
+    chart_data = build_chart_data(athlete)
+
     return render_template(
         'discover/athlete.html',
         athlete=athlete,
         events_list=events_list,
-        grouped_prs=grouped_prs
+        grouped_prs=grouped_prs,
+        chart_data=chart_data
     )

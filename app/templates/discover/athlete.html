@@ -38,7 +38,7 @@
         </div>
         {% endif %}
 
-        <div>
+        <div class="mb-2">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Personal bests</p>
             {% if not grouped_prs %}
                 <p class="text-sm text-gray-400 italic">No PRs logged yet.</p>
@@ -78,6 +78,8 @@
                 {% endfor %}
             {% endif %}
         </div>
+
+        {% include 'components/pr_chart.html' %}
 
     </div>
 </div>
