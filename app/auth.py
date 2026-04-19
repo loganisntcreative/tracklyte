@@ -9,7 +9,6 @@ import secrets
 
 auth = Blueprint('auth', __name__)
 
-
 def verified_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -54,7 +53,7 @@ def register():
 
         send_verification_email(email, token)
 
-        login_user(user)
+        login_user(user, remember=True)
         flash('Account created! Check your email to verify your account.', 'success')
         return redirect(url_for('auth.verify_pending'))
 
@@ -122,7 +121,7 @@ def login():
             flash('Invalid email or password.', 'error')
             return redirect(url_for('auth.login'))
 
-        login_user(user)
+        login_user(user, remember=True)
         return redirect(url_for('main.index'))
 
     return render_template('auth/login.html')

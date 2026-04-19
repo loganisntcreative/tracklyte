@@ -9,3 +9,5 @@ class Config:
     CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
     APP_URL = os.environ.get('APP_URL') or 'http://127.0.0.1:5000'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_DURATION = 86400
