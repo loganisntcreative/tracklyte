@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ athlete.first_name }} {{ athlete.last_name }} — TrackLyte{% endblock %}
+{% block title %}{{ coach.first_name }} {{ coach.last_name }} — TrackLyte{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
@@ -7,53 +7,55 @@
 
         <div class="flex items-start justify-between mb-6">
             <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-xl">
-                    {{ athlete.first_name[0] }}{{ athlete.last_name[0] }}
+                <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-700 font-medium text-xl">
+                    {{ coach.first_name[0] }}{{ coach.last_name[0] }}
                 </div>
                 <div>
-                    <h1 class="text-xl font-semibold">{{ athlete.first_name }} {{ athlete.last_name }}</h1>
-                    <p class="text-sm text-gray-500">{{ athlete.school }} · Class of {{ athlete.grad_year }} · {{ athlete.state }}</p>
+                    <h1 class="text-xl font-semibold">{{ coach.first_name }} {{ coach.last_name }}</h1>
+                    <p class="text-sm text-gray-500">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
                 </div>
             </div>
-            <a href="/profile/edit"
+            <a href="/coach/profile/edit"
                 class="text-sm border border-gray-200 rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-50">
                 Edit profile
             </a>
         </div>
 
-        {% if athlete_events %}
+        {% if coach.bio %}
         <div class="mb-6">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Events</p>
-            <div class="flex flex-wrap gap-2">
-                {% for event in athlete_events %}
-                    <span class="bg-emerald-50 text-emerald-700 text-sm px-3 py-1 rounded-full">{{ event }}</span>
-                {% endfor %}
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">About</p>
+            <p class="text-sm text-gray-600 leading-relaxed">{{ coach.bio }}</p>
+        </div>
+        {% endif %}
+
+        <div class="bg-gray-50 rounded-xl p-5 mb-6">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Program details</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Institution</p>
+                    <p class="text-gray-800 font-medium">{{ coach.school or '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Division / level</p>
+                    <p class="text-gray-800 font-medium">{{ coach.college or '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">State</p>
+                    <p class="text-gray-800 font-medium">{{ coach.state or '—' }}</p>
+                </div>
             </div>
         </div>
-        {% endif %}
 
-        {% if athlete.bio %}
-        <div class="mb-6">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Bio</p>
-            <p class="text-sm text-gray-600 leading-relaxed">{{ athlete.bio }}</p>
-        </div>
-        {% endif %}
-
-        <div>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Personal bests</p>
-            {% if athlete.personal_bests.count() == 0 %}
-                <p class="text-sm text-gray-400 italic">No PRs logged yet. <a href="/prs/add" class="text-emerald-600 hover:underline">Add your first PR →</a></p>
-            {% else %}
-                <div class="grid grid-cols-2 gap-3">
-                {% for pr in athlete.personal_bests %}
-                    <div class="bg-gray-50 rounded-lg px-4 py-3">
-                        <p class="text-xs text-gray-400">{{ pr.event }}</p>
-                        <p class="text-lg font-medium text-gray-900">{{ pr.time_recorded }}</p>
-                        {% if pr.meet_name %}<p class="text-xs text-gray-400 mt-1">{{ pr.meet_name }}</p>{% endif %}
-                    </div>
-                {% endfor %}
-                </div>
-            {% endif %}
+        <div class="pt-6 border-t border-gray-100">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
+            <form method="POST" action="/delete-account"
+                onsubmit="return confirm('Are you sure? This permanently deletes your account and profile. This cannot be undone.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
+                    Delete my account
+                </button>
+            </form>
         </div>
 
     </div>

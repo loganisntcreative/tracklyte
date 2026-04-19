@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.models import AthleteProfile, PersonalBest
 from app import cache
 
@@ -27,9 +27,13 @@ US_STATES = [
 GRAD_YEARS = list(range(2025, 2030))
 
 
+def discover_cache_key():
+    return f"discover_{current_user.id}_{request.query_string.decode()}"
+
+
 @discover_bp.route('/discover')
 @login_required
-@cache.cached(timeout=300, query_string=True)
+@cache.cached(timeout=300, key_prefix=discover_cache_key)
 def index():
     event_filter = request.args.get('event', '').strip()
     year_filter = request.args.get('grad_year', '').strip()

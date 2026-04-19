@@ -2,7 +2,7 @@ from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db, limiter
+from app import db, limiter, cache
 from app.models import User
 from app.email import send_verification_email
 import secrets
@@ -21,6 +21,7 @@ def verified_required(f):
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -125,6 +126,27 @@ def login():
         return redirect(url_for('main.index'))
 
     return render_template('auth/login.html')
+
+
+@auth.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    user = current_user
+    logout_user()
+
+    if user.athlete_profile:
+        for pr in user.athlete_profile.personal_bests.all():
+            db.session.delete(pr)
+        db.session.delete(user.athlete_profile)
+
+    if user.coach_profile:
+        db.session.delete(user.coach_profile)
+
+    db.session.delete(user)
+    db.session.commit()
+    cache.clear()
+    flash('Your account has been deleted.', 'success')
+    return redirect(url_for('main.index'))
 
 
 @auth.route('/logout')
