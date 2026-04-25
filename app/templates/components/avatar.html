@@ -1,0 +1,8 @@
+{% if photo_url %}
+    <img src="{{ photo_url }}" alt="{{ initials }}"
+        class="{{ size_class }} rounded-full object-cover border border-gray-200">
+{% else %}
+    <div class="{{ size_class }} rounded-full {{ bg_class }} flex items-center justify-center {{ text_class }} font-medium">
+        {{ initials }}
+    </div>
+{% endif %}

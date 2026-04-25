@@ -46,8 +46,7 @@
             Search
         </button>
         {% if event_filter or year_filter or state_filter %}
-            <a href="/discover"
-                class="text-sm text-gray-400 hover:text-gray-600 self-center">
+            <a href="/discover" class="text-sm text-gray-400 hover:text-gray-600 self-center">
                 Clear filters
             </a>
         {% endif %}
@@ -68,9 +67,14 @@
                 class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors
                 {% if not loop.last %}border-b border-gray-100{% endif %}">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm flex-shrink-0">
-                        {{ item.athlete.first_name[0] }}{{ item.athlete.last_name[0] }}
-                    </div>
+                    {% if item.athlete.photo_url %}
+                        <img src="{{ item.athlete.photo_url }}" alt="{{ item.athlete.first_name }}"
+                            class="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0">
+                    {% else %}
+                        <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm flex-shrink-0">
+                            {{ item.athlete.first_name[0] }}{{ item.athlete.last_name[0] }}
+                        </div>
+                    {% endif %}
                     <div>
                         <p class="text-sm font-medium text-gray-900">
                             {{ item.athlete.first_name }} {{ item.athlete.last_name }}

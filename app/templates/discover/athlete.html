@@ -9,9 +9,14 @@
     <div class="bg-white border border-gray-200 rounded-xl p-8">
 
         <div class="flex items-center gap-4 mb-6">
-            <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-xl">
-                {{ athlete.first_name[0] }}{{ athlete.last_name[0] }}
-            </div>
+            {% if athlete.photo_url %}
+                <img src="{{ athlete.photo_url }}" alt="{{ athlete.first_name }}"
+                    class="w-14 h-14 rounded-full object-cover border border-gray-200">
+            {% else %}
+                <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-xl">
+                    {{ athlete.first_name[0] }}{{ athlete.last_name[0] }}
+                </div>
+            {% endif %}
             <div>
                 <h1 class="text-xl font-semibold">{{ athlete.first_name }} {{ athlete.last_name }}</h1>
                 <p class="text-sm text-gray-500">

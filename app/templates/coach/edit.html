@@ -8,10 +8,28 @@
         <a href="/coach/profile" class="text-sm text-gray-500 hover:text-gray-800">← Back</a>
     </div>
 
-    <form method="POST" action="/coach/profile/edit">
+    <form method="POST" action="/coach/profile/edit" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
             <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Basic info</h2>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-1">Profile photo <span class="text-gray-400">(optional)</span></label>
+                {% if coach.photo_url %}
+                    <img src="{{ coach.photo_url }}" alt="Current photo"
+                        class="w-16 h-16 rounded-full object-cover border border-gray-200 mb-3">
+                {% endif %}
+                <div class="border-2 border-dashed border-gray-200 rounded-lg px-4 py-5 text-center hover:border-emerald-300 transition-colors">
+                    <input type="file" name="photo" id="photo-input"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        class="hidden"
+                        onchange="updatePhotoLabel(this)">
+                    <label for="photo-input" class="cursor-pointer">
+                        <p class="text-sm font-medium text-gray-600 mb-1">{{ 'Change photo' if coach.photo_url else 'Click to upload photo' }}</p>
+                        <p class="text-xs text-gray-400">JPG, PNG or WebP · Square crop recommended</p>
+                        <p id="photo-label" class="text-emerald-600 text-sm font-medium mt-2 hidden"></p>
+                    </label>
+                </div>
+            </div>
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">First name</label>
@@ -62,4 +80,13 @@
         </button>
     </form>
 </div>
+<script>
+function updatePhotoLabel(input) {
+    const label = document.getElementById('photo-label');
+    if (input.files && input.files[0]) {
+        label.textContent = input.files[0].name;
+        label.classList.remove('hidden');
+    }
+}
+</script>
 {% endblock %}

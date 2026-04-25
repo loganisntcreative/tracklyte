@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db, cache
 from app.models import AthleteProfile, PersonalBest
 from app.auth import verified_required
+from app.utils import upload_photo
 import json
 
 profile_bp = Blueprint('profile', __name__)
@@ -57,6 +58,8 @@ def setup():
 
     if request.method == 'POST':
         selected_events = ','.join(request.form.getlist('events'))
+        photo_url = upload_photo(request.files.get('photo'))
+
         athlete = AthleteProfile(
             user_id=current_user.id,
             first_name=request.form.get('first_name', '').strip(),
@@ -65,7 +68,8 @@ def setup():
             grad_year=int(request.form.get('grad_year')),
             state=request.form.get('state', '').strip(),
             events=selected_events,
-            bio=request.form.get('bio', '').strip()
+            bio=request.form.get('bio', '').strip(),
+            photo_url=photo_url
         )
         db.session.add(athlete)
         db.session.commit()
@@ -75,7 +79,8 @@ def setup():
 
     current_year = 2025
     grad_years = list(range(current_year, current_year + 5))
-    return render_template('profile/setup.html', events=TRACK_EVENTS, states=US_STATES, grad_years=grad_years)
+    return render_template('profile/setup.html', events=TRACK_EVENTS,
+                           states=US_STATES, grad_years=grad_years)
 
 
 @profile_bp.route('/profile')
@@ -111,6 +116,11 @@ def edit():
         athlete.state = request.form.get('state', '').strip()
         athlete.events = ','.join(request.form.getlist('events'))
         athlete.bio = request.form.get('bio', '').strip()
+
+        new_photo = upload_photo(request.files.get('photo'))
+        if new_photo:
+            athlete.photo_url = new_photo
+
         db.session.commit()
         cache.clear()
         flash('Profile updated!', 'success')
@@ -120,4 +130,5 @@ def edit():
     current_year = 2025
     grad_years = list(range(current_year, current_year + 5))
     return render_template('profile/edit.html', athlete=athlete, events=TRACK_EVENTS,
-                           current_events=current_events, states=US_STATES, grad_years=grad_years)
+                           current_events=current_events, states=US_STATES,
+                           grad_years=grad_years)

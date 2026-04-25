@@ -32,6 +32,7 @@ class AthleteProfile(db.Model):
     state = db.Column(db.String(50))
     events = db.Column(db.String(200))
     bio = db.Column(db.Text)
+    photo_url = db.Column(db.String(500))
 
     personal_bests = db.relationship('PersonalBest', backref='athlete', lazy='dynamic')
 
@@ -48,6 +49,7 @@ class CoachProfile(db.Model):
     college = db.Column(db.String(100))
     state = db.Column(db.String(50))
     bio = db.Column(db.Text)
+    photo_url = db.Column(db.String(500))
 
     def __repr__(self):
         return f'<Coach {self.first_name} {self.last_name}>'

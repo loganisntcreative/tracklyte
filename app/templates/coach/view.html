@@ -7,9 +7,14 @@
 
         <div class="flex items-start justify-between mb-6">
             <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-700 font-medium text-xl">
-                    {{ coach.first_name[0] }}{{ coach.last_name[0] }}
-                </div>
+                {% if coach.photo_url %}
+                    <img src="{{ coach.photo_url }}" alt="{{ coach.first_name }}"
+                        class="w-14 h-14 rounded-full object-cover border border-gray-200">
+                {% else %}
+                    <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-700 font-medium text-xl">
+                        {{ coach.first_name[0] }}{{ coach.last_name[0] }}
+                    </div>
+                {% endif %}
                 <div>
                     <h1 class="text-xl font-semibold">{{ coach.first_name }} {{ coach.last_name }}</h1>
                     <p class="text-sm text-gray-500">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
@@ -28,7 +33,7 @@
         </div>
         {% endif %}
 
-        <div class="bg-gray-50 rounded-xl p-5">
+        <div class="bg-gray-50 rounded-xl p-5 mb-6">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Program details</p>
             <div class="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -46,17 +51,17 @@
             </div>
         </div>
 
-        <div class="mt-8 pt-6 border-t border-gray-100">
-    <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
-    <form method="POST" action="/delete-account"
-        onsubmit="return confirm('Are you sure? This permanently deletes your account, profile, and all PRs. This cannot be undone.')">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit"
-            class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
-            Delete my account
-        </button>
-    </form>
-</div>
+        <div class="pt-6 border-t border-gray-100">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
+            <form method="POST" action="/delete-account"
+                onsubmit="return confirm('Are you sure? This permanently deletes your account and profile. This cannot be undone.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
+                    Delete my account
+                </button>
+            </form>
+        </div>
 
     </div>
 </div>
