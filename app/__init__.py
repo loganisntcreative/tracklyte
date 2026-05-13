@@ -27,6 +27,10 @@ def create_app():
     limiter.init_app(app)
     migrate.init_app(app, db)
 
+    with app.app_context():
+        from app import models
+        db.create_all()
+
     from app.routes import main
     app.register_blueprint(main)
 
