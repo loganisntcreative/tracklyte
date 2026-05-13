@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Send message — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">Send a message</h1>
+        <a href="javascript:history.back()" class="text-sm text-gray-500 hover:text-gray-800">← Back</a>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+            {% if recipient.athlete_profile and recipient.athlete_profile.photo_url %}
+                <img src="{{ recipient.athlete_profile.photo_url }}" alt=""
+                    class="w-10 h-10 rounded-full object-cover border border-gray-200">
+            {% elif recipient.coach_profile and recipient.coach_profile.photo_url %}
+                <img src="{{ recipient.coach_profile.photo_url }}" alt=""
+                    class="w-10 h-10 rounded-full object-cover border border-gray-200">
+            {% else %}
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm">
+                    {% if recipient.athlete_profile %}
+                        {{ recipient.athlete_profile.first_name[0] }}{{ recipient.athlete_profile.last_name[0] }}
+                    {% elif recipient.coach_profile %}
+                        {{ recipient.coach_profile.first_name[0] }}{{ recipient.coach_profile.last_name[0] }}
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div>
+                {% if recipient.athlete_profile %}
+                    <p class="text-sm font-medium text-gray-900">{{ recipient.athlete_profile.first_name }} {{ recipient.athlete_profile.last_name }}</p>
+                    <p class="text-xs text-gray-500">{{ recipient.athlete_profile.school }} · Class of {{ recipient.athlete_profile.grad_year }}</p>
+                {% elif recipient.coach_profile %}
+                    <p class="text-sm font-medium text-gray-900">
+                        {{ recipient.coach_profile.first_name }} {{ recipient.coach_profile.last_name }}
+                        {% if recipient.email.endswith('.edu') %}
+                            <span class="ml-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ recipient.coach_profile.school }}{% if recipient.coach_profile.college %} · {{ recipient.coach_profile.college }}{% endif %}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Suggested starters</p>
+            <div class="space-y-2">
+                {% for starter in starters %}
+                <button type="button"
+                    onclick="document.getElementById('body').value = '{{ starter }}'; updateCount();"
+                    class="w-full text-left text-xs text-gray-500 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 px-3 py-2 rounded-lg transition-colors">
+                    {{ starter }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <form method="POST" action="/messages/send/{{ recipient.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">Your message</label>
+                <textarea id="body" name="body" rows="5" maxlength="500" required
+                    oninput="updateCount()"
+                    placeholder="Write your message here..."
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"></textarea>
+            </div>
+            <div class="flex items-center justify-between mb-4">
+                <span id="char-count" class="text-xs text-gray-400">0 / 500</span>
+                <span class="text-xs text-gray-400">This is your one chance to make a first impression</span>
+            </div>
+            <button type="submit"
+                class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700">
+                Send message request
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function updateCount() {
+    const body = document.getElementById('body');
+    const count = document.getElementById('char-count');
+    count.textContent = body.value.length + ' / 500';
+    count.className = body.value.length > 450
+        ? 'text-xs text-red-500'
+        : 'text-xs text-gray-400';
+}
+</script>
+{% endblock %}

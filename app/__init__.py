@@ -49,4 +49,7 @@ def create_app():
     from app.discover import discover_bp
     app.register_blueprint(discover_bp)
 
+    from app.messages import messages_bp
+    app.register_blueprint(messages_bp)
+
     return app

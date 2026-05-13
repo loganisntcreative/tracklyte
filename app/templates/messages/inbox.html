@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Messages — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">Messages</h1>
+        {% if pending_count > 0 %}
+            <a href="/messages/requests"
+                class="text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-lg hover:bg-emerald-100 transition-colors font-medium">
+                {{ pending_count }} request{{ 's' if pending_count != 1 else '' }} pending
+            </a>
+        {% else %}
+            <a href="/messages/requests"
+                class="text-sm text-gray-500 hover:text-gray-800">
+                Message requests
+            </a>
+        {% endif %}
+    </div>
+
+    {% if not conversations %}
+        <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+            <p class="text-gray-400 mb-2">No messages yet.</p>
+            {% if current_user.role == 'coach' %}
+                <a href="/discover" class="text-sm text-emerald-600 hover:underline">Discover athletes to message →</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {% for convo in conversations %}
+            <a href="/messages/conversation/{{ convo.user.id }}"
+                class="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+                {% if convo.user.coach_profile and convo.user.coach_profile.photo_url %}
+                    <img src="{{ convo.user.coach_profile.photo_url }}" alt=""
+                        class="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0">
+                {% elif convo.user.athlete_profile and convo.user.athlete_profile.photo_url %}
+                    <img src="{{ convo.user.athlete_profile.photo_url }}" alt=""
+                        class="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0">
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm flex-shrink-0">
+                        {% if convo.user.coach_profile %}
+                            {{ convo.user.coach_profile.first_name[0] }}{{ convo.user.coach_profile.last_name[0] }}
+                        {% elif convo.user.athlete_profile %}
+                            {{ convo.user.athlete_profile.first_name[0] }}{{ convo.user.athlete_profile.last_name[0] }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-0.5">
+                        <p class="text-sm font-medium text-gray-900">
+                            {% if convo.user.coach_profile %}
+                                {{ convo.user.coach_profile.first_name }} {{ convo.user.coach_profile.last_name }}
+                            {% elif convo.user.athlete_profile %}
+                                {{ convo.user.athlete_profile.first_name }} {{ convo.user.athlete_profile.last_name }}
+                            {% endif %}
+                        </p>
+                        <span class="text-xs text-gray-400 flex-shrink-0 ml-2">
+                            {{ convo.last_message.timestamp.strftime('%b %d') }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 truncate">{{ convo.last_message.body[:60] }}...</p>
+                </div>
+                {% if convo.unread > 0 %}
+                    <span class="w-5 h-5 bg-emerald-600 text-white text-xs rounded-full flex items-center justify-center flex-shrink-0 font-medium">
+                        {{ convo.unread }}
+                    </span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

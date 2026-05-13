@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Message requests — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">Message requests</h1>
+            <p class="text-sm text-gray-500 mt-1">People who want to connect with you</p>
+        </div>
+        <a href="/messages" class="text-sm text-gray-500 hover:text-gray-800">← Inbox</a>
+    </div>
+
+    {% if not pending %}
+        <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+            <p class="text-gray-400">No pending message requests.</p>
+        </div>
+    {% else %}
+        <div class="space-y-3">
+            {% for msg in pending %}
+            <div class="bg-white border border-gray-200 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        {% if msg.sender.coach_profile and msg.sender.coach_profile.photo_url %}
+                            <img src="{{ msg.sender.coach_profile.photo_url }}" alt=""
+                                class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                        {% elif msg.sender.athlete_profile and msg.sender.athlete_profile.photo_url %}
+                            <img src="{{ msg.sender.athlete_profile.photo_url }}" alt=""
+                                class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                        {% else %}
+                            <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 font-medium text-sm">
+                                {% if msg.sender.coach_profile %}
+                                    {{ msg.sender.coach_profile.first_name[0] }}{{ msg.sender.coach_profile.last_name[0] }}
+                                {% elif msg.sender.athlete_profile %}
+                                    {{ msg.sender.athlete_profile.first_name[0] }}{{ msg.sender.athlete_profile.last_name[0] }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <div>
+                            {% if msg.sender.coach_profile %}
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ msg.sender.coach_profile.first_name }} {{ msg.sender.coach_profile.last_name }}
+                                    {% if msg.sender.email.endswith('.edu') %}
+                                        <span class="ml-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">✓ Verified</span>
+                                    {% endif %}
+                                </p>
+                                <p class="text-xs text-gray-500">{{ msg.sender.coach_profile.school }}{% if msg.sender.coach_profile.college %} · {{ msg.sender.coach_profile.college }}{% endif %}</p>
+                            {% elif msg.sender.athlete_profile %}
+                                <p class="text-sm font-medium text-gray-900">{{ msg.sender.athlete_profile.first_name }} {{ msg.sender.athlete_profile.last_name }}</p>
+                                <p class="text-xs text-gray-500">{{ msg.sender.athlete_profile.school }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-400 mt-0.5">{{ msg.timestamp.strftime('%b %d, %Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg px-4 py-3 mb-4">
+                    <p class="text-sm text-gray-700 leading-relaxed">{{ msg.body }}</p>
+                </div>
+
+                <div class="flex gap-3">
+                    <form method="POST" action="/messages/requests/{{ msg.id }}/accept">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit"
+                            class="bg-emerald-600 text-white text-sm px-5 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+                            Accept
+                        </button>
+                    </form>
+                    <form method="POST" action="/messages/requests/{{ msg.id }}/decline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit"
+                            class="border border-gray-200 text-gray-500 text-sm px-5 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            Decline
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
