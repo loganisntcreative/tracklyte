@@ -14,179 +14,196 @@ STARTERS = [
 ]
 
 
-def get_unread_count(user_id):
-    return Message.query.filter_by(
-        recipient_id=user_id,
-        is_read=False,
-        request_status='accepted'
-    ).count()
-
-
-def get_request_count(user_id):
-    return Message.query.filter_by(
-        recipient_id=user_id,
-        is_request=True,
-        request_status='pending'
-    ).count()
-
-
 @messages_bp.route('/messages')
 @login_required
 def inbox():
-    accepted_messages = Message.query.filter(
-        (Message.sender_id == current_user.id) |
-        (Message.recipient_id == current_user.id)
-    ).filter(
-        Message.request_status == 'accepted'
-    ).order_by(Message.timestamp.desc()).all()
+    try:
+        accepted_messages = Message.query.filter(
+            (Message.sender_id == current_user.id) |
+            (Message.recipient_id == current_user.id)
+        ).filter(
+            Message.request_status == 'accepted'
+        ).order_by(Message.timestamp.desc()).all()
 
-    conversations = {}
-    for msg in accepted_messages:
-        other_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id
-        if other_id not in conversations:
-            other_user = User.query.get(other_id)
-            unread = Message.query.filter_by(
-                sender_id=other_id,
-                recipient_id=current_user.id,
-                is_read=False,
-                request_status='accepted'
-            ).count()
-            conversations[other_id] = {
-                'user': other_user,
-                'last_message': msg,
-                'unread': unread
-            }
+        conversations = {}
+        for msg in accepted_messages:
+            other_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id
+            if other_id not in conversations:
+                other_user = User.query.get(other_id)
+                unread = Message.query.filter_by(
+                    sender_id=other_id,
+                    recipient_id=current_user.id,
+                    is_read=False,
+                    request_status='accepted'
+                ).count()
+                conversations[other_id] = {
+                    'user': other_user,
+                    'last_message': msg,
+                    'unread': unread
+                }
 
-    pending_count = get_request_count(current_user.id)
+        sent_pending = Message.query.filter_by(
+            sender_id=current_user.id,
+            request_status='pending'
+        ).order_by(Message.timestamp.desc()).all()
 
-    return render_template('messages/inbox.html',
-                           conversations=conversations.values(),
-                           pending_count=pending_count)
+        pending_count = Message.query.filter_by(
+            recipient_id=current_user.id,
+            is_request=True,
+            request_status='pending'
+        ).count()
+
+        return render_template('messages/inbox.html',
+                               conversations=conversations.values(),
+                               sent_pending=sent_pending,
+                               pending_count=pending_count)
+    except Exception as e:
+        flash(f'Could not load messages: {str(e)}', 'error')
+        return redirect(url_for('main.index'))
 
 
 @messages_bp.route('/messages/requests')
 @login_required
-def requests():
-    pending = Message.query.filter_by(
-        recipient_id=current_user.id,
-        is_request=True,
-        request_status='pending'
-    ).order_by(Message.timestamp.desc()).all()
+def message_requests():
+    try:
+        pending = Message.query.filter_by(
+            recipient_id=current_user.id,
+            is_request=True,
+            request_status='pending'
+        ).order_by(Message.timestamp.desc()).all()
 
-    return render_template('messages/requests.html', pending=pending)
+        return render_template('messages/requests.html', pending=pending)
+    except Exception as e:
+        flash(f'Could not load requests: {str(e)}', 'error')
+        return redirect(url_for('main.index'))
 
 
 @messages_bp.route('/messages/requests/<int:msg_id>/accept', methods=['POST'])
 @login_required
 def accept_request(msg_id):
-    msg = Message.query.get_or_404(msg_id)
-    if msg.recipient_id != current_user.id:
-        flash('Not allowed.', 'error')
-        return redirect(url_for('messages.requests'))
+    try:
+        msg = Message.query.get_or_404(msg_id)
+        if msg.recipient_id != current_user.id:
+            flash('Not allowed.', 'error')
+            return redirect(url_for('messages.message_requests'))
 
-    msg.request_status = 'accepted'
-    msg.is_request = False
-    msg.is_read = True
-    db.session.commit()
-    flash('Message request accepted!', 'success')
-    return redirect(url_for('messages.conversation', other_id=msg.sender_id))
+        msg.request_status = 'accepted'
+        msg.is_request = False
+        msg.is_read = True
+        db.session.commit()
+        flash('Message request accepted!', 'success')
+        return redirect(url_for('messages.conversation', other_id=msg.sender_id))
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('messages.message_requests'))
 
 
 @messages_bp.route('/messages/requests/<int:msg_id>/decline', methods=['POST'])
 @login_required
 def decline_request(msg_id):
-    msg = Message.query.get_or_404(msg_id)
-    if msg.recipient_id != current_user.id:
-        flash('Not allowed.', 'error')
-        return redirect(url_for('messages.requests'))
+    try:
+        msg = Message.query.get_or_404(msg_id)
+        if msg.recipient_id != current_user.id:
+            flash('Not allowed.', 'error')
+            return redirect(url_for('messages.message_requests'))
 
-    msg.request_status = 'declined'
-    db.session.commit()
-    return redirect(url_for('messages.requests'))
+        msg.request_status = 'declined'
+        db.session.commit()
+        return redirect(url_for('messages.message_requests'))
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('messages.message_requests'))
 
 
 @messages_bp.route('/messages/send/<int:recipient_id>', methods=['GET', 'POST'])
 @login_required
 def send_request(recipient_id):
-    recipient = User.query.get_or_404(recipient_id)
+    try:
+        recipient = User.query.get_or_404(recipient_id)
 
-    existing = Message.query.filter_by(
-        sender_id=current_user.id,
-        recipient_id=recipient_id
-    ).first()
-    if existing:
-        flash('You already sent a message to this person.', 'error')
-        return redirect(url_for('discover.athlete_profile',
-                                athlete_id=recipient.athlete_profile.id if recipient.athlete_profile else 0))
-
-    if request.method == 'POST':
-        body = request.form.get('body', '').strip()
-        if not body:
-            flash('Message cannot be empty.', 'error')
-            return redirect(url_for('messages.send_request', recipient_id=recipient_id))
-        if len(body) > 500:
-            flash('Message must be under 500 characters.', 'error')
-            return redirect(url_for('messages.send_request', recipient_id=recipient_id))
-
-        msg = Message(
+        existing = Message.query.filter_by(
             sender_id=current_user.id,
-            recipient_id=recipient_id,
-            body=body,
-            is_request=True,
-            request_status='pending'
-        )
-        db.session.add(msg)
-        db.session.commit()
-        flash('Message request sent!', 'success')
-        return redirect(url_for('main.index'))
+            recipient_id=recipient_id
+        ).first()
+        if existing:
+            flash('You already sent a message to this person.', 'error')
+            return redirect(url_for('main.index'))
 
-    return render_template('messages/send.html',
-                           recipient=recipient,
-                           starters=STARTERS)
+        if request.method == 'POST':
+            body = request.form.get('body', '').strip()
+            if not body:
+                flash('Message cannot be empty.', 'error')
+                return redirect(url_for('messages.send_request', recipient_id=recipient_id))
+            if len(body) > 500:
+                flash('Message must be under 500 characters.', 'error')
+                return redirect(url_for('messages.send_request', recipient_id=recipient_id))
+
+            msg = Message(
+                sender_id=current_user.id,
+                recipient_id=recipient_id,
+                body=body,
+                is_request=True,
+                request_status='pending'
+            )
+            db.session.add(msg)
+            db.session.commit()
+            flash('Message request sent!', 'success')
+            return redirect(url_for('messages.inbox'))
+
+        return render_template('messages/send.html',
+                               recipient=recipient,
+                               starters=STARTERS)
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('main.index'))
 
 
 @messages_bp.route('/messages/conversation/<int:other_id>', methods=['GET', 'POST'])
 @login_required
 def conversation(other_id):
-    other_user = User.query.get_or_404(other_id)
+    try:
+        other_user = User.query.get_or_404(other_id)
 
-    accepted = Message.query.filter(
-        ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
-        ((Message.sender_id == other_id) & (Message.recipient_id == current_user.id))
-    ).filter(Message.request_status == 'accepted').first()
+        accepted = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
+            ((Message.sender_id == other_id) & (Message.recipient_id == current_user.id))
+        ).filter(Message.request_status == 'accepted').first()
 
-    if not accepted:
-        flash('No active conversation found.', 'error')
+        if not accepted:
+            flash('No active conversation found.', 'error')
+            return redirect(url_for('messages.inbox'))
+
+        if request.method == 'POST':
+            body = request.form.get('body', '').strip()
+            if body:
+                msg = Message(
+                    sender_id=current_user.id,
+                    recipient_id=other_id,
+                    body=body,
+                    is_request=False,
+                    request_status='accepted'
+                )
+                db.session.add(msg)
+                db.session.commit()
+            return redirect(url_for('messages.conversation', other_id=other_id))
+
+        messages_list = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
+            ((Message.sender_id == other_id) & (Message.recipient_id == current_user.id))
+        ).filter(
+            Message.request_status == 'accepted'
+        ).order_by(Message.timestamp.asc()).all()
+
+        Message.query.filter_by(
+            sender_id=other_id,
+            recipient_id=current_user.id,
+            is_read=False
+        ).update({'is_read': True})
+        db.session.commit()
+
+        return render_template('messages/conversation.html',
+                               other_user=other_user,
+                               messages_list=messages_list)
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('messages.inbox'))
-
-    if request.method == 'POST':
-        body = request.form.get('body', '').strip()
-        if body:
-            msg = Message(
-                sender_id=current_user.id,
-                recipient_id=other_id,
-                body=body,
-                is_request=False,
-                request_status='accepted'
-            )
-            db.session.add(msg)
-            db.session.commit()
-        return redirect(url_for('messages.conversation', other_id=other_id))
-
-    messages_list = Message.query.filter(
-        ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
-        ((Message.sender_id == other_id) & (Message.recipient_id == current_user.id))
-    ).filter(
-        Message.request_status == 'accepted'
-    ).order_by(Message.timestamp.asc()).all()
-
-    Message.query.filter_by(
-        sender_id=other_id,
-        recipient_id=current_user.id,
-        is_read=False
-    ).update({'is_read': True})
-    db.session.commit()
-
-    return render_template('messages/conversation.html',
-                           other_user=other_user,
-                           messages_list=messages_list)

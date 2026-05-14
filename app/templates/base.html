@@ -71,7 +71,7 @@
                                 {% set pending.count = pending.count + 1 %}
                             {% endif %}
                         {% endfor %}
-                        {% if unread.count + pending.count > 0 %}
+                        {% if unread.count + pending.count > 9 %}9+{% else %}{{ unread.count + pending.count }}{% endif %}
                             <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                                 {{ unread.count + pending.count }}
                             </span>

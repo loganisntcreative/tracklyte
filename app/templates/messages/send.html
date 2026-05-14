@@ -46,7 +46,8 @@
             <div class="space-y-2">
                 {% for starter in starters %}
                 <button type="button"
-                    onclick="document.getElementById('body').value = '{{ starter }}'; updateCount();"
+                    data-starter="{{ starter }}"
+                    onclick="useStarter(this)"
                     class="w-full text-left text-xs text-gray-500 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 px-3 py-2 rounded-lg transition-colors">
                     {{ starter }}
                 </button>
@@ -76,6 +77,10 @@
 </div>
 
 <script>
+function useStarter(btn) {
+    document.getElementById('body').value = btn.getAttribute('data-starter');
+    updateCount();
+}
 function updateCount() {
     const body = document.getElementById('body');
     const count = document.getElementById('char-count');
