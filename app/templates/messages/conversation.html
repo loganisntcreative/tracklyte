@@ -35,9 +35,9 @@
         </div>
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 min-h-64">
+    <div id="message-thread" class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 min-h-64 max-h-96 overflow-y-auto">
         {% for msg in messages_list %}
-        <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+        <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ msg.id }}">
             <div class="max-w-xs lg:max-w-md">
                 <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed
                     {% if msg.sender_id == current_user.id %}
@@ -49,9 +49,7 @@
                 </div>
                 <div class="flex items-center gap-1 mt-1
                     {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
-                    <span class="text-xs text-gray-400">
-                        {{ msg.timestamp.strftime('%b %d, %I:%M %p') }}
-                    </span>
+                    <span class="text-xs text-gray-400">{{ msg.timestamp.strftime('%b %d, %I:%M %p') }}</span>
                     {% if msg.sender_id == current_user.id and msg.is_read %}
                         <span class="text-xs text-gray-400">· Seen</span>
                     {% endif %}
@@ -62,10 +60,10 @@
     </div>
 
     <div class="bg-white border border-gray-200 rounded-xl p-4">
-        <form method="POST" action="/messages/conversation/{{ other_user.id }}">
+        <form id="reply-form" onsubmit="sendMessage(event)">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex gap-3">
-                <textarea name="body" rows="2" required
+                <textarea id="reply-body" name="body" rows="2" required
                     placeholder="Write a message..."
                     class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"></textarea>
                 <button type="submit"
@@ -76,4 +74,76 @@
         </form>
     </div>
 </div>
+
+<script>
+const OTHER_ID = {{ other_user.id }};
+const MY_ID = {{ current_user.id }};
+const CSRF = document.querySelector('[name=csrf_token]').value;
+let lastTimestamp = Date.now() / 1000;
+let seenIds = new Set([{% for msg in messages_list %}{{ msg.id }},{% endfor %}]);
+
+function scrollToBottom() {
+    const thread = document.getElementById('message-thread');
+    thread.scrollTop = thread.scrollHeight;
+}
+
+function appendMessage(msg) {
+    if (seenIds.has(msg.id)) return;
+    seenIds.add(msg.id);
+
+    const thread = document.getElementById('message-thread');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex ' + (msg.is_mine ? 'justify-end' : 'justify-start');
+    wrapper.setAttribute('data-msg-id', msg.id);
+
+    const bubbleColor = msg.is_mine
+        ? 'bg-emerald-600 text-white rounded-br-sm'
+        : 'bg-gray-100 text-gray-900 rounded-bl-sm';
+
+    wrapper.innerHTML = `
+        <div class="max-w-xs lg:max-w-md">
+            <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${bubbleColor}">
+                ${msg.body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+            </div>
+            <div class="flex items-center gap-1 mt-1 ${msg.is_mine ? 'justify-end' : 'justify-start'}">
+                <span class="text-xs text-gray-400">${msg.timestamp}</span>
+            </div>
+        </div>`;
+
+    thread.appendChild(wrapper);
+    scrollToBottom();
+}
+
+async function poll() {
+    try {
+        const res = await fetch(`/messages/poll/${OTHER_ID}?since=${lastTimestamp}`);
+        const msgs = await res.json();
+        msgs.forEach(msg => {
+            appendMessage(msg);
+            lastTimestamp = Math.max(lastTimestamp, Date.now() / 1000);
+        });
+    } catch (e) {}
+}
+
+async function sendMessage(e) {
+    e.preventDefault();
+    const body = document.getElementById('reply-body').value.trim();
+    if (!body) return;
+
+    const form = document.getElementById('reply-form');
+    const data = new FormData(form);
+
+    await fetch(`/messages/conversation/${OTHER_ID}`, {
+        method: 'POST',
+        body: data
+    });
+
+    document.getElementById('reply-body').value = '';
+    lastTimestamp = Date.now() / 1000 - 2;
+    await poll();
+}
+
+scrollToBottom();
+setInterval(poll, 3000);
+</script>
 {% endblock %}

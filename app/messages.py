@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Message, User, AthleteProfile, CoachProfile
@@ -185,7 +185,7 @@ def conversation(other_id):
                 )
                 db.session.add(msg)
                 db.session.commit()
-            return redirect(url_for('messages.conversation', other_id=other_id))
+            return ('', 204)
 
         messages_list = Message.query.filter(
             ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
@@ -207,3 +207,37 @@ def conversation(other_id):
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('messages.inbox'))
+
+
+@messages_bp.route('/messages/poll/<int:other_id>')
+@login_required
+def poll(other_id):
+    try:
+        since = request.args.get('since', 0, type=float)
+        since_dt = datetime.fromtimestamp(since)
+
+        new_messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
+            ((Message.sender_id == other_id) & (Message.recipient_id == current_user.id))
+        ).filter(
+            Message.request_status == 'accepted',
+            Message.timestamp > since_dt
+        ).order_by(Message.timestamp.asc()).all()
+
+        Message.query.filter_by(
+            sender_id=other_id,
+            recipient_id=current_user.id,
+            is_read=False
+        ).update({'is_read': True})
+        db.session.commit()
+
+        return jsonify([{
+            'id': m.id,
+            'body': m.body,
+            'sender_id': m.sender_id,
+            'is_mine': m.sender_id == current_user.id,
+            'timestamp': m.timestamp.strftime('%b %d, %I:%M %p'),
+            'is_read': m.is_read
+        } for m in new_messages])
+    except Exception as e:
+        return jsonify([])

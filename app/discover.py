@@ -33,6 +33,19 @@ def discover_cache_key():
     return f"discover_{current_user.id}_{request.query_string.decode()}"
 
 
+def time_to_seconds(t):
+    if not t:
+        return float('inf')
+    t = t.strip()
+    try:
+        if ':' in t:
+            parts = t.split(':')
+            return float(parts[0]) * 60 + float(parts[1])
+        return float(t.replace('-', '.').replace("'", '.'))
+    except Exception:
+        return float('inf')
+
+
 @discover_bp.route('/discover')
 @login_required
 @cache.cached(timeout=300, key_prefix=discover_cache_key)
@@ -68,8 +81,11 @@ def index():
         athlete_data.append({
             'athlete': athlete,
             'events_list': events_list,
-            'best_pr': best_pr
+            'best_pr': best_pr,
+            'sort_time': time_to_seconds(best_pr.time_recorded) if best_pr else float('inf')
         })
+
+    athlete_data.sort(key=lambda x: x['sort_time'])
 
     return render_template(
         'discover/index.html',
