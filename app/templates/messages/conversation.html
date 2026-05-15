@@ -35,11 +35,11 @@
         </div>
     </div>
 
-    <div id="message-thread" class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 min-h-64 max-h-96 overflow-y-auto">
+    <div id="message-thread" class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 min-h-64 max-h-96 overflow-y-auto overflow-x-hidden">
         {% for msg in messages_list %}
         <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ msg.id }}">
-            <div class="max-w-xs lg:max-w-md">
-                <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+            <div class="max-w-xs lg:max-w-md w-full">
+                <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words
                     {% if msg.sender_id == current_user.id %}
                         bg-emerald-600 text-white rounded-br-sm
                     {% else %}
@@ -49,7 +49,7 @@
                 </div>
                 <div class="flex items-center gap-1 mt-1
                     {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
-                    <span class="text-xs text-gray-400">{{ msg.timestamp.strftime('%b %d, %I:%M %p') }}</span>
+                    <span class="text-xs text-gray-400 local-time" data-utc="{{ msg.timestamp.strftime('%b %d, %Y %H:%M:%S') }}">{{ msg.timestamp.strftime('%b %d, %I:%M %p') }}</span>
                     {% if msg.sender_id == current_user.id and msg.is_read %}
                         <span class="text-xs text-gray-400">· Seen</span>
                     {% endif %}
@@ -82,6 +82,15 @@ const CSRF = document.querySelector('[name=csrf_token]').value;
 let lastTimestamp = Date.now() / 1000;
 let seenIds = new Set([{% for msg in messages_list %}{{ msg.id }},{% endfor %}]);
 
+function formatLocalTime(utcString) {
+    const d = new Date(utcString + ' UTC');
+    return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+document.querySelectorAll('.local-time').forEach(el => {
+    el.textContent = formatLocalTime(el.getAttribute('data-utc'));
+});
+
 function scrollToBottom() {
     const thread = document.getElementById('message-thread');
     thread.scrollTop = thread.scrollHeight;
@@ -100,13 +109,15 @@ function appendMessage(msg) {
         ? 'bg-emerald-600 text-white rounded-br-sm'
         : 'bg-gray-100 text-gray-900 rounded-bl-sm';
 
+    const localTime = formatLocalTime(msg.timestamp);
+
     wrapper.innerHTML = `
-        <div class="max-w-xs lg:max-w-md">
-            <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${bubbleColor}">
+        <div class="max-w-xs lg:max-w-md w-full">
+            <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${bubbleColor}">
                 ${msg.body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
             </div>
             <div class="flex items-center gap-1 mt-1 ${msg.is_mine ? 'justify-end' : 'justify-start'}">
-                <span class="text-xs text-gray-400">${msg.timestamp}</span>
+                <span class="text-xs text-gray-400">${localTime}</span>
             </div>
         </div>`;
 
@@ -117,11 +128,12 @@ function appendMessage(msg) {
 async function poll() {
     try {
         const res = await fetch(`/messages/poll/${OTHER_ID}?since=${lastTimestamp}`);
+        if (!res.ok) return;
         const msgs = await res.json();
-        msgs.forEach(msg => {
-            appendMessage(msg);
-            lastTimestamp = Math.max(lastTimestamp, Date.now() / 1000);
-        });
+        if (msgs.length > 0) {
+            msgs.forEach(msg => appendMessage(msg));
+            lastTimestamp = Date.now() / 1000;
+        }
     } catch (e) {}
 }
 
@@ -130,15 +142,17 @@ async function sendMessage(e) {
     const body = document.getElementById('reply-body').value.trim();
     if (!body) return;
 
-    const form = document.getElementById('reply-form');
-    const data = new FormData(form);
+    const data = new FormData();
+    data.append('csrf_token', CSRF);
+    data.append('body', body);
+
+    document.getElementById('reply-body').value = '';
 
     await fetch(`/messages/conversation/${OTHER_ID}`, {
         method: 'POST',
         body: data
     });
 
-    document.getElementById('reply-body').value = '';
     lastTimestamp = Date.now() / 1000 - 2;
     await poll();
 }

@@ -214,7 +214,7 @@ def conversation(other_id):
 def poll(other_id):
     try:
         since = request.args.get('since', 0, type=float)
-        since_dt = datetime.fromtimestamp(since)
+        since_dt = datetime.utcfromtimestamp(since)
 
         new_messages = Message.query.filter(
             ((Message.sender_id == current_user.id) & (Message.recipient_id == other_id)) |
@@ -236,7 +236,7 @@ def poll(other_id):
             'body': m.body,
             'sender_id': m.sender_id,
             'is_mine': m.sender_id == current_user.id,
-            'timestamp': m.timestamp.strftime('%b %d, %I:%M %p'),
+            'timestamp': m.timestamp.strftime('%b %d, %Y %H:%M:%S'),
             'is_read': m.is_read
         } for m in new_messages])
     except Exception as e:
