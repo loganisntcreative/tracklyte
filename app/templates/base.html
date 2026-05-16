@@ -109,8 +109,105 @@
         <div class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between text-xs text-gray-400">
             <span class="font-medium text-brand-400">TrackLyte</span>
             <span>Built for athletes. Discovered by coaches.</span>
+            <a href="https://buymeacoffee.com/tracklyte" target="_blank"
+                style="display:flex;align-items:center;gap:6px;background:#FBBF24;color:#78350F;font-weight:500;padding:6px 12px;border-radius:8px;text-decoration:none;font-size:11px;transition:background 0.15s;"
+                onmouseover="this.style.background='#F59E0B'"
+                onmouseout="this.style.background='#FBBF24'">
+                ☕ Support TrackLyte
+            </a>
         </div>
     </footer>
+
+    <!-- Feedback widget -->
+    <div id="feedback-widget" style="position:fixed;bottom:20px;right:20px;z-index:50;">
+        <button onclick="toggleFeedback()"
+            style="background:#1D9E75;color:white;border:none;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;gap:6px;">
+            <span>💬</span> Feedback
+        </button>
+
+        <div id="feedback-form" style="display:none;position:absolute;bottom:48px;right:0;width:300px;background:white;border:0.5px solid #E5E7EB;border-radius:12px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
+            <p style="font-size:14px;font-weight:500;margin:0 0 12px;color:#111;">Send feedback</p>
+
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+                <button type="button" onclick="setType('bug')" id="type-bug"
+                    style="flex:1;padding:6px;font-size:12px;border:0.5px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;">
+                    🐛 Bug
+                </button>
+                <button type="button" onclick="setType('suggestion')" id="type-suggestion"
+                    style="flex:1;padding:6px;font-size:12px;border:0.5px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;">
+                    💡 Idea
+                </button>
+                <button type="button" onclick="setType('compliment')" id="type-compliment"
+                    style="flex:1;padding:6px;font-size:12px;border:0.5px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;">
+                    ⭐ Love it
+                </button>
+            </div>
+
+            <input type="hidden" id="feedback-type" value="bug">
+
+            <textarea id="feedback-message" rows="3" placeholder="What happened? What did you expect?"
+                style="width:100%;box-sizing:border-box;border:0.5px solid #E5E7EB;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:none;margin-bottom:8px;"></textarea>
+
+            <input type="email" id="feedback-contact" placeholder="Your email (optional)"
+                style="width:100%;box-sizing:border-box;border:0.5px solid #E5E7EB;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;margin-bottom:12px;">
+
+            <button onclick="submitFeedback()"
+                style="width:100%;background:#1D9E75;color:white;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:500;cursor:pointer;">
+                Send feedback
+            </button>
+
+            <p id="feedback-thanks" style="display:none;text-align:center;font-size:13px;color:#1D9E75;margin-top:10px;">
+                Thanks! We got it 🎉
+            </p>
+        </div>
+    </div>
+
+    <script>
+    const FEEDBACK_CSRF = '{{ csrf_token() }}';
+
+    function toggleFeedback() {
+        const form = document.getElementById('feedback-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function setType(type) {
+        document.getElementById('feedback-type').value = type;
+        ['bug', 'suggestion', 'compliment'].forEach(t => {
+            const btn = document.getElementById('type-' + t);
+            btn.style.background = t === type ? '#E1F5EE' : 'white';
+            btn.style.borderColor = t === type ? '#1D9E75' : '#E5E7EB';
+            btn.style.color = t === type ? '#0F6E56' : 'inherit';
+        });
+    }
+
+    async function submitFeedback() {
+        const message = document.getElementById('feedback-message').value.trim();
+        if (!message) return;
+
+        const data = new FormData();
+        data.append('csrf_token', FEEDBACK_CSRF);
+        data.append('feedback_type', document.getElementById('feedback-type').value);
+        data.append('message', message);
+        data.append('contact_email', document.getElementById('feedback-contact').value);
+        data.append('page_url', window.location.pathname);
+
+        try {
+            const res = await fetch('/feedback', { method: 'POST', body: data });
+            const json = await res.json();
+            if (json.success) {
+                document.getElementById('feedback-message').value = '';
+                document.getElementById('feedback-contact').value = '';
+                document.getElementById('feedback-thanks').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('feedback-form').style.display = 'none';
+                    document.getElementById('feedback-thanks').style.display = 'none';
+                }, 2500);
+            }
+        } catch (e) {}
+    }
+
+    setType('bug');
+    </script>
 
 </body>
 </html>

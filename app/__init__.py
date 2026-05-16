@@ -52,4 +52,7 @@ def create_app():
     from app.messages import messages_bp
     app.register_blueprint(messages_bp)
 
+    from app.feedback import feedback_bp
+    app.register_blueprint(feedback_bp)
+
     return app

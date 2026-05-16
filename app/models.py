@@ -85,3 +85,15 @@ class Message(db.Model):
 
     def __repr__(self):
         return f'<Message {self.sender_id} -> {self.recipient_id}>'
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    feedback_type = db.Column(db.String(20), nullable=False)  # bug, suggestion, compliment
+    message = db.Column(db.Text, nullable=False)
+    contact_email = db.Column(db.String(120))
+    page_url = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Feedback {self.feedback_type}>'
