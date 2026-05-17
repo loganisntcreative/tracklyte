@@ -69,3 +69,25 @@ def search_schools():
 @schools_bp.route('/api/schools/test')
 def test():
     return jsonify({'status': 'ok', 'message': 'Schools API is reachable'})
+
+
+@schools_bp.route('/api/schools/debug')
+def debug():
+    import urllib.request, urllib.parse, json
+    results = {}
+
+    for name, url in [
+        ('k12',
+         'https://educationdata.urban.org/api/v1/schools/ccd/directory/?school_name=freedom&per_page=3&fields=school_name,city,state_code'),
+        ('college',
+         'https://educationdata.urban.org/api/v1/college-university/ipeds/directory/?inst_name=oregon&per_page=3&fields=inst_name,city,state_abbr')
+    ]:
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode())
+            results[name] = {'success': True, 'count': data.get('count'), 'sample': data.get('results', [])[:2]}
+        except Exception as e:
+            results[name] = {'success': False, 'error': str(e)}
+
+    return jsonify(results)
