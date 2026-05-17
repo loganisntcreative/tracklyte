@@ -39,7 +39,9 @@
             <div class="mb-4">
                 <label class="block text-sm text-gray-600 mb-1">School / institution</label>
                 <div style="position:relative;">
-                    <input type="text" name="school" id="school-input" required
+                    <input type="text" name="school" id="school-input"
+                        data-type="college"
+                        required
                         placeholder="e.g. University of Oregon"
                         autocomplete="off"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
@@ -104,22 +106,33 @@ schoolInput.addEventListener('input', function() {
 });
 
 async function fetchSchools(query) {
+    suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">Searching...</div>';
+    suggestions.style.display = 'block';
     try {
-        const res = await fetch(`/api/schools?q=${encodeURIComponent(query)}&type=college`);
+        const type = schoolInput.dataset.type || 'college';
+        const res = await fetch(`/api/schools?q=${encodeURIComponent(query)}&type=${type}`);
         const data = await res.json();
         suggestions.innerHTML = '';
-        if (data.length === 0) { suggestions.style.display = 'none'; return; }
+        if (data.length === 0) {
+            suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">No schools found — type your school name manually</div>';
+            return;
+        }
         data.forEach(school => {
             const item = document.createElement('div');
             item.style.cssText = 'padding:10px 12px;cursor:pointer;font-size:13px;color:#374151;border-bottom:0.5px solid #F3F4F6;';
             item.textContent = school.display;
             item.addEventListener('mouseenter', () => item.style.background = '#F0FDF4');
             item.addEventListener('mouseleave', () => item.style.background = 'white');
-            item.addEventListener('click', () => { schoolInput.value = school.name; suggestions.style.display = 'none'; });
+            item.addEventListener('click', () => {
+                schoolInput.value = school.name;
+                suggestions.style.display = 'none';
+            });
             suggestions.appendChild(item);
         });
         suggestions.style.display = 'block';
-    } catch (e) { suggestions.style.display = 'none'; }
+    } catch (e) {
+        suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">Could not load suggestions</div>';
+    }
 }
 
 document.addEventListener('click', function(e) {
