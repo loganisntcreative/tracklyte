@@ -1,93 +1,225 @@
 from flask import Blueprint, request, jsonify
-import urllib.request
-import urllib.parse
-import json
 
 schools_bp = Blueprint('schools', __name__)
+
+HIGH_SCHOOLS = [
+    "Freedom High School", "Liberty High School", "Lincoln High School",
+    "Washington High School", "Jefferson High School", "Roosevelt High School",
+    "Kennedy High School", "Wilson High School", "Madison High School",
+    "Franklin High School", "Jackson High School", "Adams High School",
+    "Central High School", "North High School", "South High School",
+    "East High School", "West High School", "Lake High School",
+    "Valley High School", "Mountain View High School", "Riverside High School",
+    "Westview High School", "Eastview High School", "Northview High School",
+    "Southview High School", "Fairview High School", "Hillcrest High School",
+    "Highland High School", "Lakewood High School", "Lakeside High School",
+    "Westside High School", "Eastside High School", "Northside High School",
+    "Southside High School", "Greenwood High School", "Maplewood High School",
+    "Oakwood High School", "Pinewood High School", "Ridgewood High School",
+    "Elmwood High School", "Springwood High School", "Springville High School",
+    "Springdale High School", "Springfield High School", "Greenfield High School",
+    "Greendale High School", "Greenville High School", "Riverside High School",
+    "Rockville High School", "Rockford High School", "Rockwood High School",
+    "Rockdale High School", "Rocklin High School", "Clayton High School",
+    "Clarksville High School", "Clarkston High School", "Columbus High School",
+    "Centennial High School", "Century High School", "Champion High School",
+    "Charter Oak High School", "Chaparral High School", "Cheyenne High School",
+    "Coronado High School", "Corona High School", "Crestwood High School",
+    "Crestview High School", "Crossroads High School", "Crystal Lake High School",
+    "Cypress High School", "Deer Valley High School", "Del Norte High School",
+    "Desert Ridge High School", "Diamond Bar High School", "Discovery High School",
+    "Dublin High School", "Eagle Rock High School", "Edison High School",
+    "El Camino High School", "El Dorado High School", "Elk Grove High School",
+    "Emerald Ridge High School", "Empire High School", "Encinal High School",
+    "Etiwanda High School", "Evergreen High School", "Fairmont High School",
+    "Fallbrook High School", "Farmington High School", "Foothill High School",
+    "Forest Hills High School", "Fort Zumwalt High School", "Fountain Valley High School",
+    "Fox Chapel High School", "Francis Howell High School", "Fremont High School",
+    "Frontier High School", "Garden City High School", "Garden Grove High School",
+    "Glendale High School", "Glendora High School", "Golden Valley High School",
+    "Granite Bay High School", "Granite Hills High School", "Grant High School",
+    "Green Valley High School", "Grossmont High School", "Hamilton High School",
+    "Hanford High School", "Harbor High School", "Harvest High School",
+    "Heritage High School", "Hesperia High School", "Hidden Valley High School",
+    "Hillview High School", "Holy Cross High School", "Horizon High School",
+    "Howard High School", "Hunters Lane High School", "Huntington Beach High School",
+    "Independence High School", "Indian Hills High School", "Inglewood High School",
+    "Irvine High School", "Ironwood High School", "James Logan High School",
+    "John Adams High School", "John F Kennedy High School", "John Marshall High School",
+    "Jordan High School", "La Habra High School", "La Mirada High School",
+    "La Quinta High School", "Laguna Hills High School", "Lake Forest High School",
+    "Lake Havasu High School", "Lake Travis High School", "Lakeview High School",
+    "Las Vegas High School", "Legacy High School", "Lehi High School",
+    "Lemon Grove Academy", "Liberty Ranch High School", "Lone Peak High School",
+    "Long Beach High School", "Los Alamitos High School", "Los Altos High School",
+    "Los Gatos High School", "Lyndhurst High School", "Madera High School",
+    "Magnolia High School", "Mater Dei High School", "McFarland High School",
+    "Meadowbrook High School", "Menifee Valley High School", "Millbrook High School",
+    "Millcreek High School", "Millikan High School", "Mission Hills High School",
+    "Mission Viejo High School", "Modesto High School", "Monrovia High School",
+    "Monte Vista High School", "Montebello High School", "Moreau Catholic High School",
+    "Moreno Valley High School", "Morgan Hill High School", "Murrieta Mesa High School",
+    "Murrieta Valley High School", "Mustang High School", "Napa High School",
+    "New Braunfels High School", "New Caney High School", "Newark Memorial High School",
+    "Newton High School", "Norco High School", "North Canyon High School",
+    "North Central High School", "North Forsyth High School", "North Gwinnett High School",
+    "North Hardin High School", "North Paulding High School", "North Platte High School",
+    "Northgate High School", "Northwood High School", "Oak Park High School",
+    "Oakdale High School", "Oaks Christian High School", "Oceanside High School",
+    "Orange Vista High School", "Orangewood Academy", "Orem High School",
+    "Oxnard High School", "Pacific High School", "Palmdale High School",
+    "Palos Verdes High School", "Paradise High School", "Paramount High School",
+    "Park Hill High School", "Parkland High School", "Patriot High School",
+    "Peach County High School", "Peachtree Ridge High School", "Pearl City High School",
+    "Pebble Hills High School", "Peninsula High School", "Perris High School",
+    "Pflugerville High School", "Phoenix High School", "Pine Creek High School",
+    "Pioneer High School", "Pittsburg High School", "Placer High School",
+    "Plano East Senior High School", "Plano Senior High School", "Pleasant Grove High School",
+    "Pleasant Valley High School", "Poly High School", "Pomona High School",
+    "Ponderosa High School", "Porterville High School", "Powder Springs High School",
+    "Prairie View High School", "Prescott High School", "Proctor High School",
+    "Prospect High School", "Providence High School", "Rancho Bernardo High School",
+    "Rancho Buena Vista High School", "Rancho Cotate High School", "Rancho Cucamonga High School",
+    "Rancho Verde High School", "Reagan High School", "Redlands East Valley High School",
+    "Redlands High School", "Redondo Union High School", "Reedley High School",
+    "Renaissance High School", "Rialto High School", "Rio Linda High School",
+    "Rio Mesa High School", "Rio Norte High School", "Rocklin High School",
+    "Rolling Hills High School", "Ronald Reagan High School", "Round Rock High School",
+    "Rowland High School", "Royal High School", "Rubidoux High School",
+    "Sacramento High School", "Sage Creek High School", "Saginaw High School",
+    "Saint Francis High School", "Saint John Bosco High School", "Saint Joseph High School",
+    "Saint Mary High School", "San Bernardino High School", "San Clemente High School",
+    "San Diego High School", "San Dimas High School", "San Gorgonio High School",
+    "San Jose High School", "San Juan Hills High School", "San Marcos High School",
+    "San Pasqual High School", "Santa Ana High School", "Santa Barbara High School",
+    "Santa Clara High School", "Santa Fe High School", "Santa Maria High School",
+    "Santiago High School", "Santiana High School", "Serra High School",
+    "Servite High School", "Shadow Hills High School", "Shadow Ridge High School",
+    "Shasta High School", "Sierra High School", "Sierra Vista High School",
+    "Silver Creek High School", "Silver Lake High School", "Silverado High School",
+    "Skyline High School", "Slocumb High School", "Smoky Hill High School",
+    "Somerville High School", "South Hills High School", "South Pasadena High School",
+    "Southlands Christian High School", "Southwest High School", "Sparkman High School",
+    "Spectrum High School", "Spencer High School", "Stockton High School",
+    "Stonewall Jackson High School", "Strake Jesuit High School", "Strathmore High School",
+    "Streetsboro High School", "Striker High School", "Stuart Hall High School",
+    "Sultana High School", "Summit High School", "Suncoast High School",
+    "Sunnyvale High School", "Sunrise Mountain High School", "Sunset High School",
+    "Sunnyside High School", "Taft High School", "Temecula Valley High School",
+    "Tempe High School", "Temple High School", "Tesoro High School",
+    "The Colony High School", "Thousand Oaks High School", "Timpanogos High School",
+    "Torrance High School", "Trabuco Hills High School", "Tracy High School",
+    "Traditions High School", "Trinity High School", "Tri-Valley High School",
+    "Tulare High School", "Tulsa High School", "Turner High School",
+    "Tustin High School", "Union High School", "United High School",
+    "University High School", "Upland High School", "Valencia High School",
+    "Valley Center High School", "Valley Christian High School", "Valley View High School",
+    "Valhalla High School", "Ventura High School", "Victor Valley High School",
+    "Villa Park High School", "Vintage High School", "Vista High School",
+    "Vista del Lago High School", "Walnut High School", "Warren High School",
+    "Washington Union High School", "Waterford High School", "Watkins Glen High School",
+    "West Covina High School", "West Hills High School", "West Valley High School",
+    "Westlake High School", "Westminster High School", "Westmont High School",
+    "Westwood High School", "Whittier High School", "William S Hart High School",
+    "Willow Glen High School", "Wilmington High School", "Woodbridge High School",
+    "Woodcreek High School", "Woodlands High School", "Ygnacio Valley High School",
+    "Yuba City High School", "Yucaipa High School", "Yucca Valley High School",
+]
+
+COLLEGES = [
+    "University of Alabama", "University of Alaska", "University of Arizona",
+    "University of Arkansas", "University of California Berkeley", "University of California Los Angeles",
+    "University of California San Diego", "University of California Davis",
+    "University of California Santa Barbara", "University of California Irvine",
+    "University of Colorado Boulder", "University of Connecticut",
+    "University of Delaware", "University of Florida", "University of Georgia",
+    "University of Hawaii", "University of Idaho", "University of Illinois",
+    "University of Indiana", "University of Iowa", "University of Kansas",
+    "University of Kentucky", "University of Louisiana", "University of Maine",
+    "University of Maryland", "University of Massachusetts", "University of Michigan",
+    "University of Minnesota", "University of Mississippi", "University of Missouri",
+    "University of Montana", "University of Nebraska", "University of Nevada",
+    "University of New Hampshire", "University of New Mexico", "University of New Orleans",
+    "University of North Carolina", "University of North Dakota", "University of Ohio",
+    "University of Oklahoma", "University of Oregon", "University of Pennsylvania",
+    "University of Pittsburgh", "University of Rhode Island", "University of South Carolina",
+    "University of South Dakota", "University of Southern California",
+    "University of Tennessee", "University of Texas", "University of Utah",
+    "University of Vermont", "University of Virginia", "University of Washington",
+    "University of West Virginia", "University of Wisconsin", "University of Wyoming",
+    "Alabama A&M University", "Arizona State University", "Auburn University",
+    "Baylor University", "Boston College", "Boston University", "Brigham Young University",
+    "Brown University", "Butler University", "California State University",
+    "Clemson University", "Colorado State University", "Columbia University",
+    "Cornell University", "Dartmouth College", "Davidson College", "Drake University",
+    "Duke University", "East Carolina University", "Florida State University",
+    "Fordham University", "George Mason University", "George Washington University",
+    "Georgetown University", "Georgia Institute of Technology", "Georgia State University",
+    "Gonzaga University", "Grand Valley State University", "Harvard University",
+    "Howard University", "Illinois State University", "Indiana State University",
+    "Iowa State University", "Jacksonville University", "James Madison University",
+    "Kansas State University", "Kent State University", "Kennesaw State University",
+    "La Salle University", "Lehigh University", "Liberty University",
+    "Louisiana State University", "Loyola University", "Marquette University",
+    "Massachusetts Institute of Technology", "Miami University", "Michigan State University",
+    "Middle Tennessee State University", "Mississippi State University",
+    "Montana State University", "Murray State University", "Navy",
+    "New Mexico State University", "North Carolina State University",
+    "Northeastern University", "Northern Illinois University", "Northwestern University",
+    "Notre Dame University", "Ohio State University", "Ohio University",
+    "Oklahoma State University", "Old Dominion University", "Oregon State University",
+    "Penn State University", "Portland State University", "Princeton University",
+    "Purdue University", "Rice University", "Rutgers University",
+    "Sacred Heart University", "Saint Louis University", "Sam Houston State University",
+    "San Diego State University", "San Jose State University", "Seattle University",
+    "Seton Hall University", "South Florida University", "Southeastern Louisiana University",
+    "Southern Illinois University", "Southern Methodist University",
+    "Stanford University", "Syracuse University", "Temple University",
+    "Tennessee State University", "Texas A&M University", "Texas Christian University",
+    "Texas State University", "Texas Tech University", "Tulane University",
+    "Vanderbilt University", "Villanova University", "Virginia Tech",
+    "Wake Forest University", "Western Kentucky University", "Western Michigan University",
+    "Yale University", "Youngstown State University",
+    "Air Force Academy", "Army", "Belmont University", "Bethune-Cookman University",
+    "Campbell University", "Charleston Southern University", "Citadel",
+    "Coastal Carolina University", "College of William and Mary", "Creighton University",
+    "Elon University", "Furman University", "Hampton University",
+    "High Point University", "Hofstra University", "Holy Cross College",
+    "Jacksonville State University", "Lamar University", "Long Beach State University",
+    "Mercer University", "Monmouth University", "Morehead State University",
+    "Morgan State University", "NC Central University", "Nicholls State University",
+    "Norfolk State University", "North Dakota State University", "Oral Roberts University",
+    "Prairie View A&M University", "Presbyterian College", "Radford University",
+    "Rhode Island College", "Robert Morris University", "Sacred Heart University",
+    "Saint Francis University", "Saint Peter's University", "Samford University",
+    "Southern University", "Stephen F Austin State University", "Stony Brook University",
+    "Towson University", "Troy University", "UT Martin",
+    "Utah State University", "Utah Valley University", "Valparaiso University",
+    "Weber State University", "Western Carolina University", "Western Illinois University",
+    "Winthrop University", "Wofford College",
+]
 
 
 @schools_bp.route('/api/schools')
 def search_schools():
-    query = request.args.get('q', '').strip()
+    query = request.args.get('q', '').strip().lower()
     school_type = request.args.get('type', 'k12')
 
     if len(query) < 2:
         return jsonify([])
 
-    try:
-        encoded = urllib.parse.quote(query)
+    dataset = COLLEGES if school_type == 'college' else HIGH_SCHOOLS
 
-        if school_type == 'college':
-            url = (
-                f"https://educationdata.urban.org/api/v1/college-university/"
-                f"ipeds/directory/?inst_name={encoded}&per_page=10"
-                f"&fields=inst_name,city,state_abbr"
-            )
-            name_key = 'inst_name'
-            state_key = 'state_abbr'
-        else:
-            url = (
-                f"https://educationdata.urban.org/api/v1/schools/ccd/"
-                f"directory/?school_name={encoded}&per_page=10"
-                f"&fields=school_name,city,state_code&school_level=3"
-            )
-            name_key = 'school_name'
-            state_key = 'state_code'
+    results = []
+    for school in dataset:
+        if query in school.lower():
+            results.append({'name': school, 'display': school})
+        if len(results) >= 8:
+            break
 
-        req = urllib.request.Request(
-            url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (compatible; TrackLyte/1.0)',
-                'Accept': 'application/json'
-            }
-        )
-
-        with urllib.request.urlopen(req, timeout=8) as response:
-            data = json.loads(response.read().decode())
-
-        results = []
-        seen = set()
-
-        for school in data.get('results', []):
-            name = (school.get(name_key) or '').strip().title()
-            city = (school.get('city') or '').strip().title()
-            state = (school.get(state_key) or '').strip()
-
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            display = f"{name} — {city}, {state}" if city and state else name
-            results.append({'name': name, 'display': display})
-
-        return jsonify(results)
-
-    except Exception as e:
-        print(f'School search error: {e}')
-        return jsonify([])
+    return jsonify(results)
 
 
 @schools_bp.route('/api/schools/test')
 def test():
-    return jsonify({'status': 'ok', 'message': 'Schools API is reachable'})
-
-
-@schools_bp.route('/api/schools/debug')
-def debug():
-    import urllib.request, urllib.parse, json
-    results = {}
-
-    for name, url in [
-        ('k12',
-         'https://educationdata.urban.org/api/v1/schools/ccd/directory/?school_name=freedom&per_page=3&fields=school_name,city,state_code'),
-        ('college',
-         'https://educationdata.urban.org/api/v1/college-university/ipeds/directory/?inst_name=oregon&per_page=3&fields=inst_name,city,state_abbr')
-    ]:
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode())
-            results[name] = {'success': True, 'count': data.get('count'), 'sample': data.get('results', [])[:2]}
-        except Exception as e:
-            results[name] = {'success': False, 'error': str(e)}
-
-    return jsonify(results)
+    return jsonify({'status': 'ok', 'k12_count': len(HIGH_SCHOOLS), 'college_count': len(COLLEGES)})
