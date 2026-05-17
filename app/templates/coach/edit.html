@@ -108,7 +108,7 @@ schoolInput.addEventListener('input', function() {
 
 async function fetchSchools(query) {
     try {
-        const res = await fetch(`/api/schools?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/schools?q=${encodeURIComponent(query)}&type=college`);
         const data = await res.json();
         suggestions.innerHTML = '';
         if (data.length === 0) { suggestions.style.display = 'none'; return; }

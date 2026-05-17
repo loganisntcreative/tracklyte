@@ -130,22 +130,37 @@ def login():
 @auth.route('/delete-account', methods=['POST'])
 @login_required
 def delete_account():
-    user = current_user
-    logout_user()
+    from app.models import Message, Feedback
+    try:
+        user = current_user._get_current_object()
+        user_id = user.id
 
-    if user.athlete_profile:
-        for pr in user.athlete_profile.personal_bests.all():
-            db.session.delete(pr)
-        db.session.delete(user.athlete_profile)
+        Message.query.filter(
+            (Message.sender_id == user_id) |
+            (Message.recipient_id == user_id)
+        ).delete(synchronize_session=False)
 
-    if user.coach_profile:
-        db.session.delete(user.coach_profile)
+        Feedback.query.filter_by(user_id=user_id).delete(synchronize_session=False)
 
-    db.session.delete(user)
-    db.session.commit()
-    cache.clear()
-    flash('Your account has been deleted.', 'success')
-    return redirect(url_for('main.index'))
+        if user.athlete_profile:
+            for pr in user.athlete_profile.personal_bests.all():
+                db.session.delete(pr)
+            db.session.delete(user.athlete_profile)
+
+        if user.coach_profile:
+            db.session.delete(user.coach_profile)
+
+        db.session.delete(user)
+        db.session.commit()
+
+        logout_user()
+        cache.clear()
+        flash('Your account has been deleted.', 'success')
+        return redirect(url_for('main.index'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting account: {str(e)}', 'error')
+        return redirect(url_for('main.index'))
 
 
 @auth.route('/logout')
