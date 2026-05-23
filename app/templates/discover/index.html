@@ -6,7 +6,17 @@
 
     <div class="mb-6">
         <h1 class="text-2xl font-semibold">Discover athletes</h1>
-        <p class="text-sm text-gray-500 mt-1">Filter by event, grad year, or state</p>
+        <p class="text-sm text-gray-500 mt-1">Search by name or filter by event, grad year, or state</p>
+    </div>
+
+    <div class="relative mb-4">
+        <input type="text" id="athlete-search"
+            placeholder="Search athletes by name..."
+            autocomplete="off"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
+        <div id="search-results"
+            style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:0.5px solid #E5E7EB;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;margin-top:4px;overflow:hidden;">
+        </div>
     </div>
 
     <form method="GET" action="/discover"
@@ -102,6 +112,64 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <script>
+const searchInput = document.getElementById('athlete-search');
+const searchResults = document.getElementById('search-results');
+let searchTimer;
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const query = this.value.trim();
+    if (query.length < 2) {
+        searchResults.style.display = 'none';
+        return;
+    }
+    searchResults.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:#9CA3AF;">Searching...</div>';
+    searchResults.style.display = 'block';
+    searchTimer = setTimeout(() => fetchAthletes(query), 300);
+});
+
+async function fetchAthletes(query) {
+    try {
+        const res = await fetch(`/discover/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        searchResults.innerHTML = '';
+        if (data.length === 0) {
+            searchResults.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:#9CA3AF;">No athletes found</div>';
+            return;
+        }
+        data.forEach(athlete => {
+            const item = document.createElement('a');
+            item.href = `/athlete/${athlete.id}`;
+            item.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;border-bottom:0.5px solid #F3F4F6;transition:background 0.1s;';
+            item.addEventListener('mouseenter', () => item.style.background = '#F9FAFB');
+            item.addEventListener('mouseleave', () => item.style.background = 'white');
+
+            const avatar = athlete.photo_url
+                ? `<img src="${athlete.photo_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:0.5px solid #E5E7EB;flex-shrink:0;">`
+                : `<div style="width:36px;height:36px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#0F6E56;flex-shrink:0;">${athlete.name.split(' ').map(n=>n[0]).join('')}</div>`;
+
+            item.innerHTML = `
+                ${avatar}
+                <div>
+                    <p style="font-size:13px;font-weight:500;color:#111827;margin:0 0 2px;">${athlete.name}</p>
+                    <p style="font-size:11px;color:#9CA3AF;margin:0;">${athlete.school} · Class of ${athlete.grad_year} · ${athlete.state}</p>
+                </div>`;
+            searchResults.appendChild(item);
+        });
+        searchResults.style.display = 'block';
+    } catch (e) {
+        searchResults.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.style.display = 'none';
+    }
+});
+</script>
 
 </div>
 {% endblock %}

@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from app.models import AthleteProfile, PersonalBest
-from app import cache
+from app import cache, db
 from app.profile import build_chart_data
 import json
 
@@ -44,6 +44,35 @@ def time_to_seconds(t):
         return float(t.replace('-', '.').replace("'", '.'))
     except Exception:
         return float('inf')
+
+
+@discover_bp.route('/discover/search')
+@login_required
+def search():
+    query = request.args.get('q', '').strip().lower()
+    if len(query) < 2:
+        return jsonify([])
+
+    athletes = AthleteProfile.query.filter(
+        db.or_(
+            AthleteProfile.first_name.ilike(f'%{query}%'),
+            AthleteProfile.last_name.ilike(f'%{query}%'),
+            db.func.concat(AthleteProfile.first_name, ' ', AthleteProfile.last_name).ilike(f'%{query}%')
+        )
+    ).limit(10).all()
+
+    results = []
+    for athlete in athletes:
+        results.append({
+            'id': athlete.id,
+            'name': f'{athlete.first_name} {athlete.last_name}',
+            'school': athlete.school or '',
+            'grad_year': athlete.grad_year or '',
+            'state': athlete.state or '',
+            'photo_url': athlete.photo_url or ''
+        })
+
+    return jsonify(results)
 
 
 @discover_bp.route('/discover')
