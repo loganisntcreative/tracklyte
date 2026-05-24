@@ -53,13 +53,15 @@ def search():
     if len(query) < 2:
         return jsonify([])
 
-    athletes = AthleteProfile.query.filter(
-        db.or_(
-            AthleteProfile.first_name.ilike(f'%{query}%'),
-            AthleteProfile.last_name.ilike(f'%{query}%'),
-            db.func.concat(AthleteProfile.first_name, ' ', AthleteProfile.last_name).ilike(f'%{query}%')
-        )
-    ).limit(10).all()
+    all_athletes = AthleteProfile.query.all()
+    matched = []
+    for a in all_athletes:
+        full_name = f'{a.first_name} {a.last_name}'.lower()
+        if query in full_name or query in a.first_name.lower() or query in a.last_name.lower():
+            matched.append(a)
+        if len(matched) >= 10:
+            break
+    athletes = matched
 
     results = []
     for athlete in athletes:
