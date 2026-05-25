@@ -58,4 +58,7 @@ def create_app():
     from app.schools import schools_bp
     app.register_blueprint(schools_bp)
 
+    from app.comments import comments_bp
+    app.register_blueprint(comments_bp)
+
     return app

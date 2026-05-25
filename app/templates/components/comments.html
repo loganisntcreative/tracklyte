@@ -1,0 +1,117 @@
+<div class="mt-3 border-t border-gray-100 pt-3" id="comments-{{ pr.id }}">
+    <button onclick="toggleComments({{ pr.id }})"
+        class="text-xs text-gray-400 hover:text-emerald-600 transition-colors mb-2">
+        💬 <span id="comment-label-{{ pr.id }}">Show comments</span>
+    </button>
+
+    <div id="comment-section-{{ pr.id }}" style="display:none;">
+        <div id="comment-list-{{ pr.id }}" class="space-y-2 mb-3"></div>
+
+        <div class="flex gap-2">
+            <input type="text" id="comment-input-{{ pr.id }}"
+                placeholder="Add a comment... (max 300 chars)"
+                maxlength="300"
+                class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            <button onclick="submitComment({{ pr.id }})"
+                class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors">
+                Post
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const CSRF_TOKEN = '{{ csrf_token() }}';
+
+async function toggleComments(prId) {
+    const section = document.getElementById(`comment-section-${prId}`);
+    const label = document.getElementById(`comment-label-${prId}`);
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        label.textContent = 'Hide comments';
+        await loadComments(prId);
+    } else {
+        section.style.display = 'none';
+        label.textContent = 'Show comments';
+    }
+}
+
+async function loadComments(prId) {
+    const list = document.getElementById(`comment-list-${prId}`);
+    list.innerHTML = '<p style="font-size:11px;color:#9CA3AF;">Loading...</p>';
+    try {
+        const res = await fetch(`/comments/${prId}`);
+        const data = await res.json();
+        list.innerHTML = '';
+        if (data.length === 0) {
+            list.innerHTML = '<p style="font-size:11px;color:#9CA3AF;font-style:italic;">No comments yet.</p>';
+            return;
+        }
+        data.forEach(c => list.appendChild(buildComment(c, prId)));
+    } catch (e) {
+        list.innerHTML = '<p style="font-size:11px;color:#EF4444;">Could not load comments.</p>';
+    }
+}
+
+function buildComment(c, prId) {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;align-items:flex-start;gap:8px;';
+    wrapper.id = `comment-${c.id}`;
+
+    const avatar = c.photo
+        ? `<img src="${c.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+        : `<div style="width:24px;height:24px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#0F6E56;flex-shrink:0;">${c.name[0]}</div>`;
+
+    const deleteBtn = c.is_mine
+        ? `<button onclick="deleteComment(${c.id}, ${prId})" style="font-size:10px;color:#D1D5DB;margin-left:4px;background:none;border:none;cursor:pointer;" title="Delete">✕</button>`
+        : '';
+
+    wrapper.innerHTML = `
+        ${avatar}
+        <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+                <span style="font-size:12px;font-weight:500;color:#111827;">${c.name}</span>
+                ${c.role ? `<span style="font-size:10px;color:#9CA3AF;">${c.role}</span>` : ''}
+                <span style="font-size:10px;color:#D1D5DB;">${c.time}</span>
+                ${deleteBtn}
+            </div>
+            <p style="font-size:12px;color:#374151;margin:0;word-break:break-word;">${c.body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+        </div>`;
+    return wrapper;
+}
+
+async function submitComment(prId) {
+    const input = document.getElementById(`comment-input-${prId}`);
+    const body = input.value.trim();
+    if (!body) return;
+
+    const data = new FormData();
+    data.append('csrf_token', CSRF_TOKEN);
+    data.append('body', body);
+
+    try {
+        const res = await fetch(`/comments/${prId}`, { method: 'POST', body: data });
+        const json = await res.json();
+        if (json.success) {
+            input.value = '';
+            const list = document.getElementById(`comment-list-${prId}`);
+            const noComments = list.querySelector('p');
+            if (noComments) noComments.remove();
+            list.appendChild(buildComment({...json.comment, is_mine: true}, prId));
+        }
+    } catch (e) {}
+}
+
+async function deleteComment(commentId, prId) {
+    const data = new FormData();
+    data.append('csrf_token', CSRF_TOKEN);
+    try {
+        const res = await fetch(`/comments/delete/${commentId}`, { method: 'POST', body: data });
+        const json = await res.json();
+        if (json.success) {
+            const el = document.getElementById(`comment-${commentId}`);
+            if (el) el.remove();
+        }
+    } catch (e) {}
+}
+</script>

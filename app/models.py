@@ -97,3 +97,13 @@ class Feedback(db.Model):
 
     def __repr__(self):
         return f'<Feedback {self.feedback_type}>'
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pr_id = db.Column(db.Integer, db.ForeignKey('personal_best.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='comments')
+    pr = db.relationship('PersonalBest', backref='comments')
