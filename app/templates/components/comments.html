@@ -17,6 +17,7 @@
                 Post
             </button>
         </div>
+        <p id="comment-error-{{ pr.id }}" style="font-size:11px;color:#EF4444;margin-top:4px;"></p>
     </div>
 </div>
 
@@ -98,6 +99,11 @@ async function submitComment(prId) {
             const noComments = list.querySelector('p');
             if (noComments) noComments.remove();
             list.appendChild(buildComment({...json.comment, is_mine: true}, prId));
+            const err = document.getElementById(`comment-error-${prId}`);
+            if (err) err.textContent = '';
+        } else {
+            const err = document.getElementById(`comment-error-${prId}`);
+            if (err) err.textContent = json.error || 'Could not post comment';
         }
     } catch (e) {}
 }

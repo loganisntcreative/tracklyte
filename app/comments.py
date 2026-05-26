@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Comment, PersonalBest
+from app.models import Comment, PersonalBest, Notification
+from app.profanity import contains_profanity
 
 comments_bp = Blueprint('comments', __name__)
 
@@ -15,10 +16,8 @@ def add_comment(pr_id):
         return jsonify({'success': False, 'error': 'Empty comment'}), 400
     if len(body) > 300:
         return jsonify({'success': False, 'error': 'Too long'}), 400
-
-    comment = Comment(pr_id=pr_id, user_id=current_user.id, body=body)
-    db.session.add(comment)
-    db.session.commit()
+    if contains_profanity(body):
+        return jsonify({'success': False, 'error': 'Please keep comments respectful'}), 400
 
     if current_user.role == 'coach' and current_user.coach_profile:
         name = f'{current_user.coach_profile.first_name} {current_user.coach_profile.last_name}'
@@ -29,6 +28,21 @@ def add_comment(pr_id):
     else:
         name = current_user.email
         photo = ''
+
+    comment = Comment(pr_id=pr_id, user_id=current_user.id, body=body)
+    db.session.add(comment)
+    db.session.commit()
+
+    athlete_user_id = pr.athlete.user_id
+    if athlete_user_id != current_user.id:
+        notif = Notification(
+            user_id=athlete_user_id,
+            notif_type='comment',
+            message=f'{name} commented on your {pr.event} PR',
+            link=f'/athlete/{pr.athlete_id}'
+        )
+        db.session.add(notif)
+        db.session.commit()
 
     return jsonify({
         'success': True,

@@ -10,7 +10,7 @@ discover_bp = Blueprint('discover', __name__)
 TRACK_EVENTS = [
     '100m', '200m', '400m', '800m', '1500m', 'Mile',
     '3000m', '5000m', '10000m',
-    '100m Hurdles', '110m Hurdles', '400m Hurdles',
+    '100m Hurdles', '110m Hurdles', '300m Hurdles', '400m Hurdles',
     '3000m Steeplechase',
     '4x100m Relay', '4x400m Relay',
     'High Jump', 'Long Jump', 'Triple Jump', 'Pole Vault',

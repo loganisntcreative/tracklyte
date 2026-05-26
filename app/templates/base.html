@@ -46,6 +46,10 @@
                         <a href="/coach/profile" class="nav-link {% if '/coach' in request.path %}active{% endif %}">My profile</a>
                     {% endif %}
                     <a href="/discover" class="nav-link {% if '/discover' in request.path or '/athlete' in request.path %}active{% endif %}">Discover</a>
+                    <a href="/notifications" class="nav-link {% if '/notifications' in request.path %}active{% endif %}" style="position:relative;">
+                        🔔
+                        <span id="notif-badge" style="display:none;position:absolute;top:4px;right:4px;width:16px;height:16px;background:#EF4444;color:white;font-size:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;"></span>
+                    </a>
                     {% set total_badge = namespace(n=0) %}
                     {% for msg in current_user.received_messages %}
                         {% if msg.is_request and msg.request_status == 'pending' %}
@@ -207,6 +211,26 @@
     }
 
     setType('bug');
+
+    async function checkNotifications() {
+        try {
+            const res = await fetch('/notifications/count');
+            const data = await res.json();
+            const badge = document.getElementById('notif-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count > 9 ? '9+' : data.count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        } catch (e) {}
+    }
+    {% if current_user.is_authenticated %}
+    checkNotifications();
+    setInterval(checkNotifications, 30000);
+    {% endif %}
     </script>
 
 </body>

@@ -61,4 +61,7 @@ def create_app():
     from app.comments import comments_bp
     app.register_blueprint(comments_bp)
 
+    from app.notifications import notifications_bp
+    app.register_blueprint(notifications_bp)
+
     return app
