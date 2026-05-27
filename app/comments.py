@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Comment, PersonalBest, Notification
-from app.profanity import contains_profanity
+from app.profanity import contains_profanity, contains_borderline
 
 comments_bp = Blueprint('comments', __name__)
 
@@ -12,12 +12,17 @@ comments_bp = Blueprint('comments', __name__)
 def add_comment(pr_id):
     pr = PersonalBest.query.get_or_404(pr_id)
     body = request.form.get('body', '').strip()
+    confirmed = request.form.get('confirmed', 'false') == 'true'
+
     if not body:
         return jsonify({'success': False, 'error': 'Empty comment'}), 400
     if len(body) > 300:
         return jsonify({'success': False, 'error': 'Too long'}), 400
     if contains_profanity(body):
         return jsonify({'success': False, 'error': 'Please keep comments respectful'}), 400
+    if contains_borderline(body) and not confirmed:
+        return jsonify({'success': False, 'confirm': True,
+                        'warning': 'Your comment may come across as negative. Are you sure you want to post it?'}), 200
 
     if current_user.role == 'coach' and current_user.coach_profile:
         name = f'{current_user.coach_profile.first_name} {current_user.coach_profile.last_name}'

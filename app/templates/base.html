@@ -48,7 +48,7 @@
                     <a href="/discover" class="nav-link {% if '/discover' in request.path or '/athlete' in request.path %}active{% endif %}">Discover</a>
                     <a href="/notifications" class="nav-link {% if '/notifications' in request.path %}active{% endif %}" style="position:relative;">
                         🔔
-                        <span id="notif-badge" style="display:none;position:absolute;top:4px;right:4px;width:16px;height:16px;background:#EF4444;color:white;font-size:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;"></span>
+                        <span id="notif-badge" style="display:none;position:absolute;top:4px;right:4px;width:16px;height:16px;background:#EF4444;color:white;font-size:10px;border-radius:50%;align-items:center;justify-content:center;font-weight:600;"></span>
                     </a>
                     {% set total_badge = namespace(n=0) %}
                     {% for msg in current_user.received_messages %}

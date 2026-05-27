@@ -81,7 +81,7 @@ function buildComment(c, prId) {
     return wrapper;
 }
 
-async function submitComment(prId) {
+async function submitComment(prId, confirmed = false) {
     const input = document.getElementById(`comment-input-${prId}`);
     const body = input.value.trim();
     if (!body) return;
@@ -89,10 +89,31 @@ async function submitComment(prId) {
     const data = new FormData();
     data.append('csrf_token', CSRF_TOKEN);
     data.append('body', body);
+    if (confirmed) data.append('confirmed', 'true');
 
     try {
         const res = await fetch(`/comments/${prId}`, { method: 'POST', body: data });
         const json = await res.json();
+
+        if (json.confirm) {
+            const err = document.getElementById(`comment-error-${prId}`);
+            if (err) {
+                err.innerHTML = `${json.warning}
+                    <span style="margin-left:8px;">
+                        <button onclick="submitComment(${prId}, true)"
+                            style="font-size:11px;background:#1D9E75;color:white;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:4px;">
+                            Post anyway
+                        </button>
+                        <button onclick="document.getElementById('comment-error-${prId}').innerHTML=''"
+                            style="font-size:11px;background:#E5E7EB;color:#374151;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;">
+                            Edit
+                        </button>
+                    </span>`;
+                err.style.color = '#D97706';
+            }
+            return;
+        }
+
         if (json.success) {
             input.value = '';
             const list = document.getElementById(`comment-list-${prId}`);
@@ -100,10 +121,13 @@ async function submitComment(prId) {
             if (noComments) noComments.remove();
             list.appendChild(buildComment({...json.comment, is_mine: true}, prId));
             const err = document.getElementById(`comment-error-${prId}`);
-            if (err) err.textContent = '';
+            if (err) { err.innerHTML = ''; err.style.color = '#EF4444'; }
         } else {
             const err = document.getElementById(`comment-error-${prId}`);
-            if (err) err.textContent = json.error || 'Could not post comment';
+            if (err) {
+                err.textContent = json.error || 'Could not post comment';
+                err.style.color = '#EF4444';
+            }
         }
     } catch (e) {}
 }
