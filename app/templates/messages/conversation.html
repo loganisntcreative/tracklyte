@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <div id="message-thread" class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 min-h-64 max-h-96 overflow-y-auto overflow-x-hidden">
+    <div id="message-thread" class="bg-white border border-gray-200 rounded-xl p-6 mb-4 space-y-4 overflow-y-auto overflow-x-hidden" style="min-height:16rem;max-height:min(24rem, 50dvh);">
         {% for msg in messages_list %}
         <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ msg.id }}">
             <div class="max-w-xs lg:max-w-md w-full">
@@ -59,7 +59,7 @@
         {% endfor %}
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
+    <div class="bg-white border border-gray-200 rounded-xl p-4 sticky bottom-0">
         <form id="reply-form" onsubmit="sendMessage(event)">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex gap-3">

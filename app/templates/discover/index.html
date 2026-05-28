@@ -20,46 +20,48 @@
     </div>
 
     <form method="GET" action="/discover"
-        class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div>
+        class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-end">
+        <div class="w-full sm:w-auto">
             <label class="block text-xs text-gray-500 mb-1">Event</label>
             <select name="event"
-                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <option value="">All events</option>
                 {% for event in events %}
                     <option value="{{ event }}" {% if event == event_filter %}selected{% endif %}>{{ event }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div>
+        <div class="w-full sm:w-auto">
             <label class="block text-xs text-gray-500 mb-1">Grad year</label>
             <select name="grad_year"
-                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <option value="">All years</option>
                 {% for year in grad_years %}
                     <option value="{{ year }}" {% if year|string == year_filter %}selected{% endif %}>{{ year }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div>
+        <div class="w-full sm:w-auto">
             <label class="block text-xs text-gray-500 mb-1">State</label>
             <select name="state"
-                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <option value="">All states</option>
                 {% for state in states %}
                     <option value="{{ state }}" {% if state == state_filter %}selected{% endif %}>{{ state }}</option>
                 {% endfor %}
             </select>
         </div>
-        <button type="submit"
-            class="bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
-            Search
-        </button>
-        {% if event_filter or year_filter or state_filter %}
-            <a href="/discover" class="text-sm text-gray-400 hover:text-gray-600 self-center">
-                Clear filters
-            </a>
-        {% endif %}
+        <div class="w-full sm:w-auto flex items-center gap-3">
+            <button type="submit"
+                class="flex-1 sm:flex-none bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+                Search
+            </button>
+            {% if event_filter or year_filter or state_filter %}
+                <a href="/discover" class="text-sm text-gray-400 hover:text-gray-600">
+                    Clear filters
+                </a>
+            {% endif %}
+        </div>
     </form>
 
     <p class="text-sm text-gray-500 mb-4">
