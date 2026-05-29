@@ -3,66 +3,89 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white border border-gray-200 rounded-xl p-8">
 
-        <div class="flex items-start justify-between mb-6">
-            <div class="flex items-center gap-4">
+    <!-- Hero card -->
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
+        <div class="h-24 bg-gradient-to-r from-indigo-600 to-indigo-400 relative">
+            <div class="absolute -bottom-8 left-6">
                 {% if coach.photo_url %}
                     <img src="{{ coach.photo_url }}" alt="{{ coach.first_name }}"
-                        class="w-14 h-14 rounded-full object-cover border border-gray-200">
+                        class="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-sm">
                 {% else %}
-                    <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-700 font-medium text-xl">
+                    <div class="w-20 h-20 rounded-2xl bg-indigo-50 border-4 border-white shadow-sm flex items-center justify-center text-indigo-700 font-bold text-2xl">
                         {{ coach.first_name[0] }}{{ coach.last_name[0] }}
                     </div>
                 {% endif %}
-                <div>
-                    <h1 class="text-xl font-semibold">{{ coach.first_name }} {{ coach.last_name }}</h1>
-                    <p class="text-sm text-gray-500">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
-                </div>
             </div>
-            <a href="/coach/profile/edit"
-                class="text-sm border border-gray-200 rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-50">
-                Edit profile
-            </a>
-        </div>
-
-        {% if coach.bio %}
-        <div class="mb-6">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">About</p>
-            <p class="text-sm text-gray-600 leading-relaxed">{{ coach.bio }}</p>
-        </div>
-        {% endif %}
-
-        <div class="bg-gray-50 rounded-xl p-5 mb-6">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Program details</p>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                    <p class="text-gray-400 text-xs mb-1">Institution</p>
-                    <p class="text-gray-800 font-medium">{{ coach.school or '—' }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400 text-xs mb-1">Division / level</p>
-                    <p class="text-gray-800 font-medium">{{ coach.college or '—' }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400 text-xs mb-1">State</p>
-                    <p class="text-gray-800 font-medium">{{ coach.state or '—' }}</p>
-                </div>
+            <div class="absolute bottom-3 right-4">
+                <a href="/coach/profile/edit"
+                    class="bg-white text-indigo-700 text-sm px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors shadow-sm">
+                    Edit profile
+                </a>
             </div>
         </div>
 
-        <div class="pt-6 border-t border-gray-100">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
-            <form method="POST" action="/delete-account"
-                onsubmit="return confirm('Are you sure? This permanently deletes your account and profile. This cannot be undone.')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit"
-                    class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
-                    Delete my account
-                </button>
-            </form>
-        </div>
+        <div class="pt-12 px-6 pb-6">
+            <h1 class="text-2xl font-semibold text-gray-900">{{ coach.first_name }} {{ coach.last_name }}</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
 
+            {% if coach.bio %}
+            <p class="text-sm text-gray-600 leading-relaxed mt-3">{{ coach.bio }}</p>
+            {% endif %}
+        </div>
     </div>
+
+    <!-- Program details -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Program details</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+                <p class="text-xs text-gray-400 mb-1">Institution</p>
+                <p class="text-sm font-semibold text-gray-900">{{ coach.school or '—' }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+                <p class="text-xs text-gray-400 mb-1">Division</p>
+                <p class="text-sm font-semibold text-gray-900">{{ coach.college or '—' }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+                <p class="text-xs text-gray-400 mb-1">State</p>
+                <p class="text-sm font-semibold text-gray-900">{{ coach.state or '—' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <a href="/discover"
+            class="bg-indigo-600 text-white rounded-xl px-5 py-4 flex items-center gap-3 hover:bg-indigo-700 transition-colors">
+            <span class="text-2xl">🔍</span>
+            <div>
+                <p class="text-sm font-semibold">Discover athletes</p>
+                <p class="text-xs text-indigo-200">Find your next recruit</p>
+            </div>
+        </a>
+        <a href="/messages"
+            class="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+            <span class="text-2xl">💬</span>
+            <div>
+                <p class="text-sm font-semibold text-gray-900">Messages</p>
+                <p class="text-xs text-gray-400">Your conversations</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
+        <form method="POST" action="/delete-account"
+            onsubmit="return confirm('Are you sure? This permanently deletes your account and profile. This cannot be undone.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
+                Delete my account
+            </button>
+        </form>
+    </div>
+
 </div>
 {% endblock %}
