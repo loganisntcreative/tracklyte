@@ -61,11 +61,12 @@ def register():
 
 
 @auth.route('/verify/<token>')
-def verify_email(token):
-    user = User.query.filter_by(verification_token=token).first()
-    if not user:
-        flash('Invalid or expired verification link.', 'error')
-        return redirect(url_for('main.index'))
+def verify(token):
+    user = User.query.filter_by(verification_token=token).first_or_404()
+    user.is_verified = True
+    user.verification_token = None
+    db.session.commit()
+    return render_template('auth/verified.html')
 
     user.is_verified = True
     user.verification_token = None
