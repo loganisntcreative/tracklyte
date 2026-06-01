@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
-from app.models import CoachProfile
+from app.models import CoachProfile, User
 from app.auth import verified_required
 from app.utils import upload_photo
 
@@ -58,7 +58,6 @@ def view():
         return redirect(url_for('main.index'))
     if not current_user.coach_profile:
         return redirect(url_for('coach.setup'))
-
     coach = current_user.coach_profile
     return render_template('coach/view.html', coach=coach)
 
@@ -85,9 +84,24 @@ def edit():
         if new_photo:
             coach.photo_url = new_photo
 
+        new_program_photo = upload_photo(request.files.get('program_photo'))
+        if new_program_photo:
+            coach.program_photo_url = new_program_photo
+
         db.session.commit()
         flash('Profile updated!', 'success')
         return redirect(url_for('coach.view'))
 
     return render_template('coach/edit.html', coach=coach, states=US_STATES,
                            divisions=DIVISION_LEVELS)
+
+
+@coach_bp.route('/coach/view/<int:user_id>')
+@login_required
+def public_view(user_id):
+    user = User.query.get_or_404(user_id)
+    if not user.coach_profile:
+        flash('Coach profile not found.', 'error')
+        return redirect(url_for('main.index'))
+    coach = user.coach_profile
+    return render_template('coach/public.html', coach=coach, coach_user=user)

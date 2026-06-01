@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ coach.first_name }} {{ coach.last_name }} — TrackLyte{% endblock %}
+{% block title %}Coach {{ coach.first_name }} {{ coach.last_name }} — TrackLyte{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
+
+    <a href="javascript:history.back()" class="text-sm text-gray-500 hover:text-gray-800 mb-6 inline-block">← Back</a>
 
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
         <div class="h-24 bg-gradient-to-r from-indigo-600 to-indigo-400 relative">
@@ -16,18 +18,29 @@
                     </div>
                 {% endif %}
             </div>
+            {% if current_user.role == 'athlete' %}
             <div class="absolute bottom-3 right-4">
-                <a href="/coach/profile/edit"
+                <a href="/messages/send/{{ coach_user.id }}"
                     class="bg-white text-indigo-700 text-sm px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors shadow-sm">
-                    Edit profile
+                    Send message
                 </a>
             </div>
+            {% endif %}
         </div>
         <div class="pt-12 px-6 pb-6">
-            <h1 class="text-2xl font-semibold text-gray-900">{{ coach.first_name }} {{ coach.last_name }}</h1>
-            <p class="text-sm text-gray-500 mt-0.5">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
+            <div class="flex items-start justify-between mb-1">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-900">
+                        {{ coach.first_name }} {{ coach.last_name }}
+                        {% if coach_user.email.endswith('.edu') %}
+                            <span class="ml-2 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium align-middle">✓ Verified</span>
+                        {% endif %}
+                    </h1>
+                    <p class="text-sm text-gray-500 mt-0.5">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
+                </div>
+            </div>
             {% if coach.bio %}
-            <p class="text-sm text-gray-600 leading-relaxed mt-3">{{ coach.bio }}</p>
+            <p class="text-sm text-gray-600 leading-relaxed mt-4">{{ coach.bio }}</p>
             {% endif %}
         </div>
     </div>
@@ -35,7 +48,7 @@
     {% if coach.program_photo_url %}
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
         <img src="{{ coach.program_photo_url }}" alt="{{ coach.school }} program"
-            class="w-full h-48 object-cover">
+            class="w-full h-52 object-cover">
         <div class="px-5 py-3">
             <p class="text-xs text-gray-400 font-medium">{{ coach.school }} — Program photo</p>
         </div>
@@ -60,36 +73,16 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <a href="/discover"
-            class="bg-indigo-600 text-white rounded-xl px-5 py-4 flex items-center gap-3 hover:bg-indigo-700 transition-colors">
-            <span class="text-2xl">🔍</span>
-            <div>
-                <p class="text-sm font-semibold">Discover athletes</p>
-                <p class="text-xs text-indigo-200">Find your next recruit</p>
-            </div>
-        </a>
-        <a href="/messages"
-            class="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
-            <span class="text-2xl">💬</span>
-            <div>
-                <p class="text-sm font-semibold text-gray-900">Messages</p>
-                <p class="text-xs text-gray-400">Your conversations</p>
-            </div>
+    {% if current_user.role == 'athlete' %}
+    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl p-6 text-center">
+        <p class="text-white font-semibold mb-1">Interested in this program?</p>
+        <p class="text-indigo-200 text-sm mb-4">Send a message to start the conversation.</p>
+        <a href="/messages/send/{{ coach_user.id }}"
+            class="bg-white text-indigo-700 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition-colors inline-block">
+            Send message →
         </a>
     </div>
-
-    <div class="bg-white border border-gray-200 rounded-2xl p-6">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Danger zone</p>
-        <form method="POST" action="/delete-account"
-            onsubmit="return confirm('Are you sure? This permanently deletes your account and profile. This cannot be undone.')">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
-                class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-lg transition-colors">
-                Delete my account
-            </button>
-        </form>
-    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

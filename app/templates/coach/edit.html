@@ -10,26 +10,45 @@
 
     <form method="POST" action="/coach/profile/edit" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Basic info</h2>
-            <div class="mb-4">
-                <label class="block text-sm text-gray-600 mb-1">Profile photo <span class="text-gray-400">(optional)</span></label>
-                {% if coach.photo_url %}
-                    <img src="{{ coach.photo_url }}" alt="Current photo"
-                        class="w-16 h-16 rounded-full object-cover border border-gray-200 mb-3">
-                {% endif %}
-                <div class="border-2 border-dashed border-gray-200 rounded-lg px-4 py-5 text-center hover:border-emerald-300 transition-colors">
-                    <input type="file" name="photo" id="photo-input"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        class="hidden"
-                        onchange="updatePhotoLabel(this)">
-                    <label for="photo-input" class="cursor-pointer">
-                        <p class="text-sm font-medium text-gray-600 mb-1">{{ 'Change photo' if coach.photo_url else 'Click to upload photo' }}</p>
-                        <p class="text-xs text-gray-400">JPG, PNG or WebP · Square crop recommended</p>
-                        <p id="photo-label" class="text-emerald-600 text-sm font-medium mt-2 hidden"></p>
-                    </label>
-                </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Profile photo</h2>
+            {% if coach.photo_url %}
+                <img src="{{ coach.photo_url }}" alt="Current photo"
+                    class="w-16 h-16 rounded-xl object-cover border border-gray-200 mb-3">
+            {% endif %}
+            <div class="border-2 border-dashed border-gray-200 rounded-xl px-4 py-5 text-center hover:border-emerald-300 transition-colors">
+                <input type="file" name="photo" id="photo-input"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    class="hidden" onchange="updateLabel('photo-label', this)">
+                <label for="photo-input" class="cursor-pointer">
+                    <p class="text-sm font-medium text-gray-600 mb-1">{{ 'Change photo' if coach.photo_url else 'Upload profile photo' }}</p>
+                    <p class="text-xs text-gray-400">JPG, PNG or WebP · Square crop recommended</p>
+                    <p id="photo-label" class="text-emerald-600 text-sm font-medium mt-2 hidden"></p>
+                </label>
             </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Program photo</h2>
+            {% if coach.program_photo_url %}
+                <img src="{{ coach.program_photo_url }}" alt="Program photo"
+                    class="w-full h-32 rounded-xl object-cover border border-gray-200 mb-3">
+            {% endif %}
+            <div class="border-2 border-dashed border-gray-200 rounded-xl px-4 py-5 text-center hover:border-emerald-300 transition-colors">
+                <input type="file" name="program_photo" id="program-photo-input"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    class="hidden" onchange="updateLabel('program-photo-label', this)">
+                <label for="program-photo-input" class="cursor-pointer">
+                    <p class="text-sm font-medium text-gray-600 mb-1">{{ 'Change program photo' if coach.program_photo_url else 'Upload a photo of your program or facility' }}</p>
+                    <p class="text-xs text-gray-400">JPG, PNG or WebP · Landscape orientation recommended</p>
+                    <p id="program-photo-label" class="text-emerald-600 text-sm font-medium mt-2 hidden"></p>
+                </label>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Basic info</h2>
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">First name</label>
@@ -45,15 +64,11 @@
             <div class="mb-4">
                 <label class="block text-sm text-gray-600 mb-1">School / institution</label>
                 <div style="position:relative;">
-                    <input type="text" name="school" id="school-input"
-                        data-type="college"
-                        value="{{ coach.school }}"
-                        required
-                        autocomplete="off"
+                    <input type="text" name="school" id="school-input" data-type="college"
+                        value="{{ coach.school }}" required autocomplete="off"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                     <div id="school-suggestions"
-                        style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:0.5px solid #E5E7EB;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:2px;">
-                    </div>
+                        style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:0.5px solid #E5E7EB;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
                 </div>
             </div>
             <div class="mb-4">
@@ -77,21 +92,22 @@
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Bio</h2>
-            <textarea name="bio" rows="4"
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Bio</h2>
+            <textarea name="bio" rows="4" placeholder="Tell athletes about your program, coaching philosophy, and what you look for in recruits..."
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none">{{ coach.bio or '' }}</textarea>
         </div>
 
         <button type="submit"
-            class="w-full bg-emerald-600 text-white py-3 rounded-lg text-sm font-medium hover:bg-emerald-700">
+            class="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors">
             Save changes
         </button>
     </form>
 </div>
+
 <script>
-function updatePhotoLabel(input) {
-    const label = document.getElementById('photo-label');
+function updateLabel(labelId, input) {
+    const label = document.getElementById(labelId);
     if (input.files && input.files[0]) {
         label.textContent = input.files[0].name;
         label.classList.remove('hidden');
@@ -118,7 +134,7 @@ async function fetchSchools(query) {
         const data = await res.json();
         suggestions.innerHTML = '';
         if (data.length === 0) {
-            suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">No schools found — type your school name manually</div>';
+            suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">No schools found — type manually</div>';
             return;
         }
         data.forEach(school => {
@@ -127,14 +143,11 @@ async function fetchSchools(query) {
             item.textContent = school.display;
             item.addEventListener('mouseenter', () => item.style.background = '#F0FDF4');
             item.addEventListener('mouseleave', () => item.style.background = 'white');
-            item.addEventListener('click', () => {
-                schoolInput.value = school.name;
-                suggestions.style.display = 'none';
-            });
+            item.addEventListener('click', () => { schoolInput.value = school.name; suggestions.style.display = 'none'; });
             suggestions.appendChild(item);
         });
         suggestions.style.display = 'block';
-    } catch (e) {
+    } catch(e) {
         suggestions.innerHTML = '<div style="padding:10px 12px;font-size:13px;color:#9CA3AF;">Could not load suggestions</div>';
     }
 }

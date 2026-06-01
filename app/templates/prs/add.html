@@ -8,14 +8,14 @@
         <a href="/prs" class="text-sm text-gray-500 hover:text-gray-800">← All PRs</a>
     </div>
 
-    <form method="POST" action="/prs/add" enctype="multipart/form-data">
+    <form method="POST" action="/prs/add" enctype="multipart/form-data" id="pr-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
 
             <div class="mb-4">
-                <label class="block text-sm text-gray-600 mb-1">Event</label>
+                <label class="block text-sm text-gray-600 mb-1 font-medium">Event</label>
                 <select name="event" required
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                     <option value="">Select event...</option>
                     {% for event in events %}
                         <option value="{{ event }}">{{ event }}</option>
@@ -24,62 +24,124 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm text-gray-600 mb-1">Time / distance / height</label>
+                <label class="block text-sm text-gray-600 mb-1 font-medium">Time / distance / height</label>
                 <input type="text" name="time_recorded" required
                     placeholder="e.g. 10.45 or 1:52.30 or 6-04"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <p class="text-xs text-gray-400 mt-1">Seconds, min:sec, or feet-inches.</p>
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm text-gray-600 mb-1">Date achieved</label>
+                <label class="block text-sm text-gray-600 mb-1 font-medium">Date achieved</label>
                 <input type="date" name="date_achieved" value="{{ today }}"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm text-gray-600 mb-1">Meet name <span class="text-gray-400">(optional)</span></label>
+                <label class="block text-sm text-gray-600 mb-1 font-medium">Meet name <span class="text-gray-400 font-normal">(optional)</span></label>
                 <input type="text" name="meet_name"
                     placeholder="e.g. CIF State Championships"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
             </div>
 
             <div>
-                <label class="block text-sm text-gray-600 mb-1">
-                    Video or photo <span class="text-gray-400">(optional)</span>
+                <label class="block text-sm text-gray-600 mb-1 font-medium">
+                    Video or photo <span class="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <div class="border-2 border-dashed border-gray-200 rounded-lg px-4 py-6 text-center hover:border-emerald-300 transition-colors">
+                <div id="upload-area" class="border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 text-center hover:border-emerald-300 transition-colors cursor-pointer" onclick="document.getElementById('media-input').click()">
                     <input type="file" name="media" id="media-input"
-                        accept="video/mp4,video/mov,video/avi,image/jpeg,image/png,image/gif,image/webp"
+                        accept="video/mp4,video/quicktime,video/avi,video/mov,image/jpeg,image/png,image/gif,image/webp"
                         class="hidden"
-                        onchange="updateLabel(this)">
-                    <label for="media-input" class="cursor-pointer">
-                        <div class="text-gray-400 text-sm">
-                            <p class="font-medium text-gray-600 mb-1">Click to upload</p>
-                            <p>MP4, MOV, JPG, PNG supported</p>
-                            <p id="file-label" class="text-emerald-600 font-medium mt-2 hidden"></p>
-                        </div>
-                    </label>
+                        onchange="handleFileSelect(this)">
+                    <div id="upload-placeholder">
+                        <div class="text-3xl mb-2">📎</div>
+                        <p class="font-medium text-gray-600 text-sm mb-1">Click to upload video or photo</p>
+                        <p class="text-xs text-gray-400">MP4, MOV, JPG, PNG · Max 200MB for videos</p>
+                    </div>
+                    <div id="upload-selected" class="hidden">
+                        <div class="text-3xl mb-2">✅</div>
+                        <p id="file-name" class="font-medium text-emerald-600 text-sm mb-1"></p>
+                        <p id="file-size" class="text-xs text-gray-400"></p>
+                        <button type="button" onclick="clearFile(event)" class="text-xs text-red-400 hover:text-red-600 mt-1">Remove</button>
+                    </div>
                 </div>
-                <p class="text-xs text-gray-400 mt-1">Max ~100MB. Coaches will see this on your profile.</p>
+                <div id="file-error" class="hidden mt-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg">
+                    <p class="text-xs text-red-600 font-medium" id="file-error-text"></p>
+                    <p class="text-xs text-red-400 mt-0.5">Please compress your video or use a shorter clip before uploading.</p>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Coaches will see this on your profile. Videos over 200MB will be rejected.</p>
             </div>
 
         </div>
 
-        <button type="submit"
-            class="w-full bg-emerald-600 text-white py-3 rounded-lg text-sm font-medium hover:bg-emerald-700">
+        <button type="submit" id="submit-btn"
+            class="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors">
             Save PR
         </button>
     </form>
 </div>
 
 <script>
-function updateLabel(input) {
-    const label = document.getElementById('file-label');
-    if (input.files && input.files[0]) {
-        label.textContent = input.files[0].name;
-        label.classList.remove('hidden');
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024;  // 20MB
+
+function handleFileSelect(input) {
+    const errorDiv = document.getElementById('file-error');
+    const errorText = document.getElementById('file-error-text');
+    const placeholder = document.getElementById('upload-placeholder');
+    const selected = document.getElementById('upload-selected');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const submitBtn = document.getElementById('submit-btn');
+
+    errorDiv.classList.add('hidden');
+
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+    if (file.size > maxSize) {
+        errorText.textContent = `File too large: ${sizeMB}MB. ${isVideo ? 'Videos must be under 200MB.' : 'Images must be under 20MB.'}`;
+        errorDiv.classList.remove('hidden');
+        input.value = '';
+        placeholder.classList.remove('hidden');
+        selected.classList.add('hidden');
+        submitBtn.disabled = false;
+        return;
     }
+
+    placeholder.classList.add('hidden');
+    selected.classList.remove('hidden');
+    fileName.textContent = file.name;
+    fileSize.textContent = `${sizeMB}MB · ${isVideo ? 'Video' : 'Image'}`;
 }
+
+function clearFile(e) {
+    e.stopPropagation();
+    document.getElementById('media-input').value = '';
+    document.getElementById('upload-placeholder').classList.remove('hidden');
+    document.getElementById('upload-selected').classList.add('hidden');
+    document.getElementById('file-error').classList.add('hidden');
+}
+
+document.getElementById('pr-form').addEventListener('submit', function(e) {
+    const input = document.getElementById('media-input');
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const isVideo = file.type.startsWith('video/');
+        const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+        if (file.size > maxSize) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('file-error');
+            document.getElementById('file-error-text').textContent =
+                `File too large (${(file.size/1024/1024).toFixed(1)}MB). Please compress before uploading.`;
+            errorDiv.classList.remove('hidden');
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+});
 </script>
 {% endblock %}

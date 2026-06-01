@@ -11,7 +11,7 @@ profile_bp = Blueprint('profile', __name__)
 TRACK_EVENTS = [
     '100m', '200m', '400m', '800m', '1500m', 'Mile',
     '3000m', '5000m', '10000m',
-    '100m Hurdles', '110m Hurdles', '400m Hurdles',
+    '100m Hurdles', '110m Hurdles', '300m Hurdles', '400m Hurdles',
     '3000m Steeplechase',
     '4x100m Relay', '4x400m Relay',
     'High Jump', 'Long Jump', 'Triple Jump', 'Pole Vault',
@@ -26,6 +26,32 @@ US_STATES = [
     'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
     'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
 ]
+
+
+def time_to_seconds(t):
+    if not t:
+        return float('inf')
+    t = str(t).strip()
+    try:
+        if ':' in t:
+            parts = t.split(':')
+            return float(parts[0]) * 60 + float(parts[1])
+        return float(t.replace('-', '.').replace("'", '.').replace('"', ''))
+    except Exception:
+        return float('inf')
+
+
+def get_best_prs(athlete):
+    all_prs = athlete.personal_bests.all()
+    best = {}
+    for pr in all_prs:
+        if pr.event not in best:
+            best[pr.event] = pr
+        else:
+            if time_to_seconds(pr.time_recorded) < time_to_seconds(best[pr.event].time_recorded):
+                best[pr.event] = pr
+    return sorted(best.values(), key=lambda p: p.event)
+
 
 def build_chart_data(athlete):
     all_prs = athlete.personal_bests.filter(
@@ -59,7 +85,6 @@ def setup():
     if request.method == 'POST':
         selected_events = ','.join(request.form.getlist('events'))
         photo_url = upload_photo(request.files.get('photo'))
-
         athlete = AthleteProfile(
             user_id=current_user.id,
             first_name=request.form.get('first_name', '').strip(),
@@ -94,8 +119,12 @@ def view():
     athlete = current_user.athlete_profile
     athlete_events = athlete.events.split(',') if athlete.events else []
     chart_data = build_chart_data(athlete)
+    best_prs = get_best_prs(athlete)
+
     return render_template('profile/view.html', athlete=athlete,
-                           athlete_events=athlete_events, chart_data=chart_data)
+                           athlete_events=athlete_events,
+                           chart_data=chart_data,
+                           best_prs=best_prs)
 
 
 @profile_bp.route('/profile/edit', methods=['GET', 'POST'])
@@ -116,11 +145,9 @@ def edit():
         athlete.state = request.form.get('state', '').strip()
         athlete.events = ','.join(request.form.getlist('events'))
         athlete.bio = request.form.get('bio', '').strip()
-
         new_photo = upload_photo(request.files.get('photo'))
         if new_photo:
             athlete.photo_url = new_photo
-
         db.session.commit()
         cache.clear()
         flash('Profile updated!', 'success')

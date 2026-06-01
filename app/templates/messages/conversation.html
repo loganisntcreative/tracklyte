@@ -22,16 +22,23 @@
                     {% endif %}
                 </div>
             {% endif %}
-            <span class="text-sm font-medium text-gray-900">
-                {% if other_user.coach_profile %}
-                    {{ other_user.coach_profile.first_name }} {{ other_user.coach_profile.last_name }}
-                    {% if other_user.email.endswith('.edu') %}
-                        <span class="ml-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">✓ Verified</span>
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-medium text-gray-900">
+                    {% if other_user.coach_profile %}
+                        {{ other_user.coach_profile.first_name }} {{ other_user.coach_profile.last_name }}
+                        {% if other_user.email.endswith('.edu') %}
+                            <span class="ml-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">✓ Verified</span>
+                        {% endif %}
+                    {% elif other_user.athlete_profile %}
+                        {{ other_user.athlete_profile.first_name }} {{ other_user.athlete_profile.last_name }}
                     {% endif %}
-                {% elif other_user.athlete_profile %}
-                    {{ other_user.athlete_profile.first_name }} {{ other_user.athlete_profile.last_name }}
+                </span>
+                {% if other_user.role == 'coach' %}
+                    <a href="/coach/view/{{ other_user.id }}" class="text-xs text-emerald-600 hover:underline">View profile</a>
+                {% elif other_user.role == 'athlete' and other_user.athlete_profile %}
+                    <a href="/athlete/{{ other_user.athlete_profile.id }}" class="text-xs text-emerald-600 hover:underline">View profile</a>
                 {% endif %}
-            </span>
+            </div>
         </div>
     </div>
 

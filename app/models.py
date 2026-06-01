@@ -50,6 +50,7 @@ class CoachProfile(db.Model):
     state = db.Column(db.String(50))
     bio = db.Column(db.Text)
     photo_url = db.Column(db.String(500))
+    program_photo_url = db.Column(db.String(500))
 
     def __repr__(self):
         return f'<Coach {self.first_name} {self.last_name}>'
