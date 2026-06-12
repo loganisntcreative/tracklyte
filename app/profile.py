@@ -41,10 +41,12 @@ def time_to_seconds(t):
         return float('inf')
 
 
-def get_best_prs(athlete):
-    all_prs = athlete.personal_bests.all()
+def get_best_prs(athlete, prs=None):
+    """Returns list of best PRs per event. Accepts pre-loaded prs list to avoid extra query."""
+    if prs is None:
+        prs = athlete.personal_bests.all()
     best = {}
-    for pr in all_prs:
+    for pr in prs:
         if pr.event not in best:
             best[pr.event] = pr
         else:
@@ -53,22 +55,27 @@ def get_best_prs(athlete):
     return sorted(best.values(), key=lambda p: p.event)
 
 
-def build_chart_data(athlete):
-    all_prs = athlete.personal_bests.filter(
-        PersonalBest.date_achieved != None
-    ).order_by(PersonalBest.date_achieved.asc()).all()
+def build_chart_data(athlete, prs=None):
+    """Builds chart data. Accepts pre-loaded prs list to avoid extra query."""
+    if prs is None:
+        prs = athlete.personal_bests.filter(
+            PersonalBest.date_achieved != None
+        ).order_by(PersonalBest.date_achieved.asc()).all()
+    else:
+        prs = [pr for pr in prs if pr.date_achieved is not None]
+        prs.sort(key=lambda p: p.date_achieved)
 
     grouped = {}
-    for pr in all_prs:
+    for pr in prs:
         grouped.setdefault(pr.event, []).append(pr)
 
     charts = {}
-    for event, prs in grouped.items():
-        if len(prs) < 2:
+    for event, event_prs in grouped.items():
+        if len(event_prs) < 2:
             continue
         charts[event] = {
-            'labels': [pr.date_achieved.strftime('%b %d, %Y') for pr in prs],
-            'values': [pr.time_recorded for pr in prs]
+            'labels': [pr.date_achieved.strftime('%b %d, %Y') for pr in event_prs],
+            'values': [pr.time_recorded for pr in event_prs]
         }
     return json.dumps(charts)
 
@@ -98,7 +105,8 @@ def setup():
         )
         db.session.add(athlete)
         db.session.commit()
-        cache.clear()
+        cache.delete(f'discover_athlete_')
+        cache.delete(f'discover_coach_')
         flash('Profile created! Welcome to TrackLyte.', 'success')
         return redirect(url_for('profile.view'))
 
@@ -117,9 +125,12 @@ def view():
         return redirect(url_for('profile.setup'))
 
     athlete = current_user.athlete_profile
+
+    # Load PRs ONCE — pass to both functions
+    all_prs = athlete.personal_bests.all()
+    best_prs = get_best_prs(athlete, prs=all_prs)
+    chart_data = build_chart_data(athlete, prs=all_prs)
     athlete_events = athlete.events.split(',') if athlete.events else []
-    chart_data = build_chart_data(athlete)
-    best_prs = get_best_prs(athlete)
 
     return render_template('profile/view.html', athlete=athlete,
                            athlete_events=athlete_events,
@@ -149,7 +160,8 @@ def edit():
         if new_photo:
             athlete.photo_url = new_photo
         db.session.commit()
-        cache.clear()
+        # Targeted cache clearing instead of nuking everything
+        cache.delete(f'athlete_{athlete.id}')
         flash('Profile updated!', 'success')
         return redirect(url_for('profile.view'))
 

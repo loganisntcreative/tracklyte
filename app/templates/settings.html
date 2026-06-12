@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Settings — TrackLyte{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold">Settings</h1>
+        <p class="text-sm text-gray-500 mt-1">Manage your preferences and account</p>
+    </div>
+
+    <!-- Appearance -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Appearance</p>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-900">Dark mode</p>
+                <p class="text-xs text-gray-400 mt-0.5">Easier on the eyes at night</p>
+            </div>
+            <button onclick="toggleTheme()" id="theme-toggle-btn"
+                style="position:relative;width:48px;height:26px;border-radius:999px;border:none;cursor:pointer;transition:background 0.2s;"
+                title="Toggle theme">
+                <span id="theme-toggle-knob"
+                    style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Account info -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Account</p>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                <p class="text-sm text-gray-500">Email</p>
+                <p class="text-sm font-medium text-gray-900">{{ current_user.email }}</p>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                <p class="text-sm text-gray-500">Account type</p>
+                <span class="text-xs font-medium px-2 py-1 rounded-full
+                    {% if current_user.role == 'athlete' %}bg-emerald-50 text-emerald-700{% else %}bg-indigo-50 text-indigo-700{% endif %}">
+                    {{ current_user.role.capitalize() }}
+                </span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+                <p class="text-sm text-gray-500">Verified</p>
+                {% if current_user.is_verified %}
+                    <span class="text-xs font-medium text-emerald-600">✓ Verified</span>
+                {% else %}
+                    <a href="/resend-verification" class="text-xs text-amber-600 hover:underline font-medium">Resend verification email</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile link -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Profile</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-900">Edit your profile</p>
+                <p class="text-xs text-gray-400 mt-0.5">Update your info, photo, and bio</p>
+            </div>
+            {% if current_user.role == 'athlete' %}
+                <a href="/profile/edit" class="text-sm text-emerald-600 hover:underline font-medium">Edit →</a>
+            {% else %}
+                <a href="/coach/profile/edit" class="text-sm text-emerald-600 hover:underline font-medium">Edit →</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Danger zone</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-900">Delete account</p>
+                <p class="text-xs text-gray-400 mt-0.5">Permanently remove your account and all data</p>
+            </div>
+            <form method="POST" action="/delete-account"
+                onsubmit="return confirm('Are you sure? This permanently deletes your account. This cannot be undone.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function syncToggle() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const btn = document.getElementById('theme-toggle-btn');
+    const knob = document.getElementById('theme-toggle-knob');
+    if (btn && knob) {
+        btn.style.background = isDark ? '#1D9E75' : '#D1D5DB';
+        knob.style.left = isDark ? '25px' : '3px';
+    }
+}
+
+// Sync on load
+syncToggle();
+
+// Re-sync when theme changes (from any toggle)
+document.addEventListener('themeChanged', syncToggle);
+
+// Override toggleTheme to also sync this toggle
+const _origToggle = window.toggleTheme;
+window.toggleTheme = function() {
+    _origToggle();
+    syncToggle();
+};
+</script>
+{% endblock %}

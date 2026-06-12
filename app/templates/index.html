@@ -4,47 +4,236 @@
 {% block content %}
 {% if current_user.is_authenticated %}
 
-    <div class="text-center py-16">
-        <h1 class="text-3xl font-semibold text-gray-900 mb-3">
-            Welcome back{% if current_user.role == 'athlete' and current_user.athlete_profile %}, {{ current_user.athlete_profile.first_name }}{% elif current_user.role == 'coach' and current_user.coach_profile %}, {{ current_user.coach_profile.first_name }}{% endif %}.
-        </h1>
-        <p class="text-gray-500 mb-8">
-            {% if current_user.role == 'athlete' %}Track your PRs. Get discovered by coaches.
-            {% else %}Find your next recruit.{% endif %}
-        </p>
-        <div class="flex justify-center gap-3 flex-wrap">
-            {% if current_user.role == 'athlete' %}
-                <a href="/profile" class="bg-brand-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors">
-                    My profile
-                </a>
-                <a href="/prs/add" class="border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    Log a PR
-                </a>
-                <a href="/discover" class="border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    Discover athletes
-                </a>
-            {% else %}
-                <a href="/discover" class="bg-brand-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors">
-                    Discover athletes
-                </a>
-                <a href="/messages" class="border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    Messages
-                </a>
-                <a href="/coach/profile" class="border border-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    My profile
-                </a>
-            {% endif %}
+    {% if current_user.role == 'athlete' and current_user.athlete_profile %}
+    {% set athlete = current_user.athlete_profile %}
+
+    <div class="max-w-3xl mx-auto">
+
+        <!-- Hero -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
+            <div class="h-20 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
+            <div class="px-6 pb-6 -mt-10 flex items-end justify-between flex-wrap gap-3">
+                <div class="flex items-end gap-4">
+                    {% if athlete.photo_url %}
+                        <img src="{{ athlete.photo_url }}" alt="{{ athlete.first_name }}"
+                            class="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-sm">
+                    {% else %}
+                        <div class="w-20 h-20 rounded-2xl bg-emerald-50 border-4 border-white shadow-sm flex items-center justify-center text-emerald-700 font-bold text-2xl">
+                            {{ athlete.first_name[0] }}{{ athlete.last_name[0] }}
+                        </div>
+                    {% endif %}
+                    <div class="mb-1">
+                        <h1 class="text-xl font-semibold text-gray-900">Welcome back, {{ athlete.first_name }} 👋</h1>
+                        <p class="text-sm text-gray-500">{{ athlete.school }} · Class of {{ athlete.grad_year }}</p>
+                    </div>
+                </div>
+                {% if unread_notifs and unread_notifs > 0 %}
+                <div class="mb-1">
+                    <a href="/notifications" class="text-xs bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg font-medium hover:bg-red-100 transition-colors">
+                        {{ unread_notifs }} new notification{{ 's' if unread_notifs != 1 else '' }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
         </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-emerald-600">{{ total_prs or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">PRs logged</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-gray-900">{{ total_events or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Events tracked</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-gray-900">{{ active_convos or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Coach convos</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-gray-900">{{ total_athletes or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Athletes on platform</p>
+            </div>
+        </div>
+
+        {% if best_prs %}
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-4">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Your best times</p>
+                <a href="/prs" class="text-xs text-emerald-600 hover:underline font-medium">Full history →</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {% for pr in best_prs %}
+                <div class="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl px-4 py-3 text-center hover:border-emerald-200 transition-colors">
+                    <p class="text-xs text-gray-400 mb-1 font-medium">{{ pr.event }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ pr.time_recorded }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if recent_pr %}
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-4">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Most recent PR</p>
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center gap-4">
+                    <div class="bg-emerald-50 rounded-xl px-4 py-3 text-center min-w-24">
+                        <p class="text-xs text-emerald-600 font-medium mb-0.5">{{ recent_pr.event }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ recent_pr.time_recorded }}</p>
+                    </div>
+                    <div>
+                        {% if recent_pr.meet_name %}<p class="text-sm font-medium text-gray-700">{{ recent_pr.meet_name }}</p>{% endif %}
+                        {% if recent_pr.date_achieved %}<p class="text-xs text-gray-400">{{ recent_pr.date_achieved.strftime('%B %d, %Y') }}</p>{% endif %}
+                        {% if not recent_pr.meet_name and not recent_pr.date_achieved %}
+                            <p class="text-sm text-gray-400">Logged recently</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="/prs/add" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex-shrink-0">
+                    + Log another
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick actions -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <a href="/prs/add" class="bg-emerald-600 text-white rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-emerald-700 transition-colors text-center">
+                <span class="text-2xl">➕</span>
+                <span class="text-xs font-semibold">Log a PR</span>
+            </a>
+            <a href="/profile" class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition-colors text-center">
+                <span class="text-2xl">👤</span>
+                <span class="text-xs font-semibold text-gray-700">My profile</span>
+            </a>
+            <a href="/discover" class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition-colors text-center">
+                <span class="text-2xl">🔍</span>
+                <span class="text-xs font-semibold text-gray-700">Discover</span>
+            </a>
+            <a href="/messages" class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition-colors text-center">
+                <span class="text-2xl">💬</span>
+                <span class="text-xs font-semibold text-gray-700">Messages</span>
+            </a>
+        </div>
+
+        {% if not best_prs %}
+        <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-6 text-center">
+            <p class="text-white font-semibold text-lg mb-1">Your profile is ready. Now show your times.</p>
+            <p class="text-emerald-100 text-sm mb-4">Coaches filter by PRs. Log your first time to start getting discovered.</p>
+            <a href="/prs/add" class="bg-white text-emerald-700 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-50 transition-colors inline-block">
+                Log your first PR →
+            </a>
+        </div>
+        {% endif %}
+
     </div>
+
+    {% elif current_user.role == 'coach' and current_user.coach_profile %}
+    {% set coach = current_user.coach_profile %}
+
+    <div class="max-w-3xl mx-auto">
+
+        <!-- Hero -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
+            <div class="h-20 bg-gradient-to-r from-indigo-600 to-indigo-400"></div>
+            <div class="px-6 pb-6 -mt-10 flex items-end justify-between flex-wrap gap-3">
+                <div class="flex items-end gap-4">
+                    {% if coach.photo_url %}
+                        <img src="{{ coach.photo_url }}" alt="{{ coach.first_name }}"
+                            class="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-sm">
+                    {% else %}
+                        <div class="w-20 h-20 rounded-2xl bg-indigo-50 border-4 border-white shadow-sm flex items-center justify-center text-indigo-700 font-bold text-2xl">
+                            {{ coach.first_name[0] }}{{ coach.last_name[0] }}
+                        </div>
+                    {% endif %}
+                    <div class="mb-1">
+                        <h1 class="text-xl font-semibold text-gray-900">Welcome back, Coach {{ coach.last_name }} 👋</h1>
+                        <p class="text-sm text-gray-500">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %}</p>
+                    </div>
+                </div>
+                {% if unread and unread > 0 %}
+                <div class="mb-1">
+                    <a href="/messages" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-100 transition-colors">
+                        {{ unread }} new message{{ 's' if unread != 1 else '' }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-indigo-600">{{ sent_requests or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Messages sent</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-amber-500">{{ pending or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Awaiting reply</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-emerald-600">{{ accepted or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Accepted</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-center">
+                <p class="text-3xl font-bold text-gray-900">{{ total_athletes or 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Athletes on platform</p>
+            </div>
+        </div>
+
+        <!-- Quick search -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-4">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Find athletes</p>
+            <div class="flex gap-3">
+                <input type="text" id="dash-search"
+                    placeholder="Search by name..."
+                    class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    onkeydown="if(event.key==='Enter' && this.value.trim()){window.location='/discover'}">
+                <a href="/discover" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                    Browse all
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="grid grid-cols-3 gap-3">
+            <a href="/discover" class="bg-indigo-600 text-white rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-indigo-700 transition-colors text-center">
+                <span class="text-2xl">🔍</span>
+                <span class="text-xs font-semibold">Discover athletes</span>
+            </a>
+            <a href="/messages" class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition-colors text-center">
+                <span class="text-2xl">💬</span>
+                <span class="text-xs font-semibold text-gray-700">Messages</span>
+            </a>
+            <a href="/coach/profile" class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition-colors text-center">
+                <span class="text-2xl">👤</span>
+                <span class="text-xs font-semibold text-gray-700">My profile</span>
+            </a>
+        </div>
+
+    </div>
+
+    {% else %}
+    <div class="max-w-md mx-auto text-center py-16">
+        <div class="text-5xl mb-4">🏃</div>
+        <h1 class="text-2xl font-semibold mb-2">You're in. Now set up your profile.</h1>
+        <p class="text-gray-500 text-sm mb-8">Coaches can't find you until your profile is live.</p>
+        {% if current_user.role == 'athlete' %}
+            <a href="/profile/setup" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-colors">Set up athlete profile →</a>
+        {% else %}
+            <a href="/coach/setup" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">Set up coach profile →</a>
+        {% endif %}
+    </div>
+    {% endif %}
 
 {% else %}
 
-    <!-- Hero -->
+    <!-- LANDING PAGE -->
     <div class="text-center py-16 sm:py-24">
         <div class="inline-flex items-center gap-2 mb-6">
-            <span class="bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1 rounded-full">
-                Public Beta
-            </span>
+            <span class="bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1 rounded-full">Public Beta</span>
             <span class="text-xs text-gray-400">Free for athletes and coaches</span>
         </div>
         <h1 class="text-4xl sm:text-5xl font-semibold text-gray-900 mb-5 leading-tight">
@@ -54,12 +243,10 @@
             Build your profile, log your PRs with race footage, and let college coaches find you — all in one place.
         </p>
         <div class="flex justify-center gap-3 flex-wrap">
-            <a href="/register?role=athlete"
-                class="bg-brand-400 text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-600 transition-colors text-sm sm:text-base">
+            <a href="/register?role=athlete" class="bg-brand-400 text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-600 transition-colors">
                 I'm an athlete →
             </a>
-            <a href="/register?role=coach"
-                class="border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base">
+            <a href="/register?role=coach" class="border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                 I'm a coach
             </a>
         </div>
@@ -87,86 +274,78 @@
         </div>
     </div>
 
-    <!-- Feature split -->
+    <!-- Athlete / Coach split -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-16">
         <div class="bg-brand-50 border border-brand-100 rounded-2xl p-8">
             <p class="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-4">For athletes</p>
             <h3 class="text-xl font-semibold text-gray-900 mb-4">Put your best times in front of the right coaches</h3>
             <ul class="space-y-3 text-sm text-gray-600">
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Public profile with your PRs, events, and race footage
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Automatic progress charts showing your improvement over time
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Direct messaging when a coach wants to recruit you
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Shareable profile link for college applications
-                </li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Public profile with your PRs, events, and race footage</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Automatic progress charts showing your improvement over time</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Direct messaging when a coach wants to recruit you</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Shareable profile link for college applications</li>
             </ul>
-            <a href="/register?role=athlete"
-                class="inline-block mt-6 bg-brand-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors">
+            <a href="/register?role=athlete" class="inline-block mt-6 bg-brand-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors">
                 Create athlete profile →
             </a>
         </div>
-
         <div class="bg-white border border-gray-200 rounded-2xl p-8">
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">For coaches</p>
             <h3 class="text-xl font-semibold text-gray-900 mb-4">Find recruits who fit your program exactly</h3>
             <ul class="space-y-3 text-sm text-gray-600">
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Filter athletes by event, graduation year, and state
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    See PRs, race footage, and progress charts instantly
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Message request system — athletes accept before conversations open
-                </li>
-                <li class="flex items-start gap-2">
-                    <span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span>
-                    Search athletes by name across the entire platform
-                </li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Filter athletes by event, graduation year, and state</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> See PRs, race footage, and progress charts instantly</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Message request system — athletes accept before conversations open</li>
+                <li class="flex items-start gap-2"><span class="text-brand-400 mt-0.5 flex-shrink-0">✓</span> Search athletes by name across the entire platform</li>
             </ul>
-            <a href="/register?role=coach"
-                class="inline-block mt-6 border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            <a href="/register?role=coach" class="inline-block mt-6 border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                 Create coach profile →
             </a>
         </div>
     </div>
 
-    <!-- Features -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-16">
-        <div class="bg-white border border-gray-200 rounded-xl p-6">
-            <div class="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center mb-4">
-                <svg width="20" height="20" fill="none" stroke="#1D9E75" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <!-- Why TrackLyte vs NCSA / AthleteNet -->
+    <div class="mb-16">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest text-center mb-3">Why TrackLyte</p>
+        <h2 class="text-2xl font-semibold text-gray-900 text-center mb-2">Built for track. Not for everyone.</h2>
+        <p class="text-gray-500 text-center text-sm mb-10 max-w-md mx-auto">NCSA and AthleteNet are built for all sports and charge hundreds a year. TrackLyte is free and designed specifically around how track recruiting actually works.</p>
+
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            <!-- Header row -->
+            <div class="grid grid-cols-4 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <div class="px-5 py-3 col-span-1"></div>
+                <div class="px-4 py-3 text-center text-brand-600">TrackLyte</div>
+                <div class="px-4 py-3 text-center">NCSA</div>
+                <div class="px-4 py-3 text-center">AthleteNet</div>
             </div>
-            <h3 class="font-medium text-gray-900 mb-2">Athlete profiles</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">Everything coaches need to evaluate a recruit — times, footage, bio, and improvement history — in one clean profile.</p>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-6">
-            <div class="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center mb-4">
-                <svg width="20" height="20" fill="none" stroke="#1D9E75" stroke-width="1.5" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+            <!-- Rows -->
+            {% set rows = [
+                ('Free for athletes', True, False, False),
+                ('Track-specific filtering', True, False, False),
+                ('PR history with video', True, False, True),
+                ('Progress charts', True, False, False),
+                ('Direct coach messaging', True, True, True),
+                ('No middleman or agent', True, False, True),
+                ('No required questionnaires', True, False, False),
+                ('Coach verification badges', True, False, True),
+            ] %}
+            {% for label, tl, ncsa, an in rows %}
+            <div class="grid grid-cols-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                <div class="px-5 py-3.5 text-sm text-gray-700 font-medium col-span-1">{{ label }}</div>
+                <div class="px-4 py-3.5 text-center">
+                    {% if tl %}<span class="text-emerald-500 font-bold text-base">✓</span>{% else %}<span class="text-gray-300 text-base">✕</span>{% endif %}
+                </div>
+                <div class="px-4 py-3.5 text-center">
+                    {% if ncsa %}<span class="text-gray-400 text-base">✓</span>{% else %}<span class="text-gray-300 text-base">✕</span>{% endif %}
+                </div>
+                <div class="px-4 py-3.5 text-center">
+                    {% if an %}<span class="text-gray-400 text-base">✓</span>{% else %}<span class="text-gray-300 text-base">✕</span>{% endif %}
+                </div>
             </div>
-            <h3 class="font-medium text-gray-900 mb-2">PR tracking</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">Log every personal best with video proof. Progress charts show coaches your trajectory, not just a snapshot.</p>
+            {% endfor %}
         </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-6">
-            <div class="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center mb-4">
-                <svg width="20" height="20" fill="none" stroke="#1D9E75" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <h3 class="font-medium text-gray-900 mb-2">Coach discovery</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">College coaches filter by event, grad year, and state. The fastest athletes in your event show up first.</p>
-        </div>
+        <p class="text-xs text-gray-400 text-center mt-3">Based on publicly available information. NCSA athlete plans start at $149/year.</p>
     </div>
 
     <!-- Bottom CTA -->
@@ -174,12 +353,10 @@
         <h2 class="text-2xl sm:text-3xl font-semibold text-white mb-3">Your recruiting journey starts here.</h2>
         <p class="text-brand-100 mb-8 text-sm sm:text-base">Free for athletes. Free for coaches. No credit card required.</p>
         <div class="flex justify-center gap-3 flex-wrap">
-            <a href="/register?role=athlete"
-                class="bg-white text-brand-600 px-6 py-3 rounded-lg font-medium hover:bg-brand-50 transition-colors text-sm sm:text-base">
+            <a href="/register?role=athlete" class="bg-white text-brand-600 px-6 py-3 rounded-lg font-medium hover:bg-brand-50 transition-colors">
                 Create athlete profile →
             </a>
-            <a href="/register?role=coach"
-                class="border border-brand-300 text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-600 transition-colors text-sm sm:text-base">
+            <a href="/register?role=coach" class="border border-brand-300 text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-600 transition-colors">
                 I'm a coach
             </a>
         </div>

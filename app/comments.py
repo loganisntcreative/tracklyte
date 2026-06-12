@@ -22,7 +22,7 @@ def add_comment(pr_id):
         return jsonify({'success': False, 'error': 'Please keep comments respectful'}), 400
     if contains_borderline(body) and not confirmed:
         return jsonify({'success': False, 'confirm': True,
-                        'warning': 'Your comment may come across as negative. Are you sure you want to post it?'}), 200
+                        'warning': 'Your comment may come across as negative. Are you sure?'}), 200
 
     if current_user.role == 'coach' and current_user.coach_profile:
         name = f'{current_user.coach_profile.first_name} {current_user.coach_profile.last_name}'
@@ -36,7 +36,6 @@ def add_comment(pr_id):
 
     comment = Comment(pr_id=pr_id, user_id=current_user.id, body=body)
     db.session.add(comment)
-    db.session.commit()
 
     athlete_user_id = pr.athlete.user_id
     if athlete_user_id != current_user.id:
@@ -47,7 +46,8 @@ def add_comment(pr_id):
             link=f'/athlete/{pr.athlete_id}'
         )
         db.session.add(notif)
-        db.session.commit()
+
+    db.session.commit()  # ONE commit for both comment and notification
 
     return jsonify({
         'success': True,

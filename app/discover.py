@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from app.models import AthleteProfile, PersonalBest
 from app import cache, db
-from app.profile import build_chart_data
+from app.profile import build_chart_data, time_to_seconds, get_best_prs
 import json
 
 discover_bp = Blueprint('discover', __name__)
@@ -30,20 +30,8 @@ GRAD_YEARS = list(range(2025, 2030))
 
 
 def discover_cache_key():
-    return f"discover_{current_user.id}_{request.query_string.decode()}"
-
-
-def time_to_seconds(t):
-    if not t:
-        return float('inf')
-    t = t.strip()
-    try:
-        if ':' in t:
-            parts = t.split(':')
-            return float(parts[0]) * 60 + float(parts[1])
-        return float(t.replace('-', '.').replace("'", '.'))
-    except Exception:
-        return float('inf')
+    # Use role instead of user_id — all coaches share one cache, all athletes share another
+    return f"discover_{current_user.role}_{request.query_string.decode()}"
 
 
 @discover_bp.route('/discover/search')
@@ -61,20 +49,15 @@ def search():
             matched.append(a)
         if len(matched) >= 10:
             break
-    athletes = matched
 
-    results = []
-    for athlete in athletes:
-        results.append({
-            'id': athlete.id,
-            'name': f'{athlete.first_name} {athlete.last_name}',
-            'school': athlete.school or '',
-            'grad_year': athlete.grad_year or '',
-            'state': athlete.state or '',
-            'photo_url': athlete.photo_url or ''
-        })
-
-    return jsonify(results)
+    return jsonify([{
+        'id': a.id,
+        'name': f'{a.first_name} {a.last_name}',
+        'school': a.school or '',
+        'grad_year': a.grad_year or '',
+        'state': a.state or '',
+        'photo_url': a.photo_url or ''
+    } for a in matched])
 
 
 @discover_bp.route('/discover')
@@ -86,7 +69,6 @@ def index():
     state_filter = request.args.get('state', '').strip()
 
     query = AthleteProfile.query
-
     if year_filter:
         query = query.filter(AthleteProfile.grad_year == int(year_filter))
     if state_filter:
@@ -96,19 +78,34 @@ def index():
 
     athletes = query.order_by(AthleteProfile.last_name).all()
 
+    if athletes:
+        athlete_ids = [a.id for a in athletes]
+
+        # ONE bulk query for ALL athlete PRs — eliminates N+1
+        pr_query = PersonalBest.query.filter(
+            PersonalBest.athlete_id.in_(athlete_ids)
+        )
+        if event_filter:
+            pr_query = pr_query.filter(PersonalBest.event == event_filter)
+
+        all_prs = pr_query.all()
+
+        # Build best PR map in Python — O(n) single pass
+        best_prs_map = {}
+        for pr in all_prs:
+            aid = pr.athlete_id
+            if aid not in best_prs_map:
+                best_prs_map[aid] = pr
+            else:
+                if time_to_seconds(pr.time_recorded) < time_to_seconds(best_prs_map[aid].time_recorded):
+                    best_prs_map[aid] = pr
+    else:
+        best_prs_map = {}
+
     athlete_data = []
     for athlete in athletes:
         events_list = athlete.events.split(',') if athlete.events else []
-        best_pr = (
-            athlete.personal_bests
-            .filter(PersonalBest.event == event_filter)
-            .order_by(PersonalBest.date_achieved.desc())
-            .first()
-        ) if event_filter else (
-            athlete.personal_bests
-            .order_by(PersonalBest.date_achieved.desc())
-            .first()
-        )
+        best_pr = best_prs_map.get(athlete.id)
         athlete_data.append({
             'athlete': athlete,
             'events_list': events_list,
@@ -133,16 +130,18 @@ def index():
 
 @discover_bp.route('/athlete/<int:athlete_id>')
 @login_required
+@cache.cached(timeout=120, key_prefix=lambda: f"athlete_{request.view_args['athlete_id']}")
 def athlete_profile(athlete_id):
     athlete = AthleteProfile.query.get_or_404(athlete_id)
     events_list = athlete.events.split(',') if athlete.events else []
 
-    all_prs = athlete.personal_bests.order_by(PersonalBest.date_achieved.desc()).all()
+    # Load PRs ONCE — pass to both functions
+    all_prs = athlete.personal_bests.all()
     grouped_prs = {}
     for pr in all_prs:
         grouped_prs.setdefault(pr.event, []).append(pr)
 
-    chart_data = build_chart_data(athlete)
+    chart_data = build_chart_data(athlete, prs=all_prs)
 
     return render_template(
         'discover/athlete.html',
