@@ -31,10 +31,18 @@ def index():
             PersonalBest.created_at.desc()
         ).first()
 
-        active_convos = db.session.query(func.count(Message.id)).filter(
+        # Count UNIQUE conversation partners, not individual messages
+        convo_msgs = db.session.query(
+            Message.sender_id, Message.recipient_id
+        ).filter(
             (Message.sender_id == current_user.id) | (Message.recipient_id == current_user.id),
             Message.request_status == 'accepted'
-        ).scalar() or 0
+        ).all()
+        partner_ids = set(
+            m.recipient_id if m.sender_id == current_user.id else m.sender_id
+            for m in convo_msgs
+        )
+        active_convos = len(partner_ids)
 
         unread_notifs = db.session.query(func.count(Notification.id)).filter(
             Notification.user_id == current_user.id,

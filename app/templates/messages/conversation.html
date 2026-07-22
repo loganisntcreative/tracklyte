@@ -48,10 +48,11 @@
             <div class="max-w-xs lg:max-w-md w-full">
                 <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words
                     {% if msg.sender_id == current_user.id %}
-                        bg-emerald-600 text-white rounded-br-sm
+                        rounded-br-sm text-white
                     {% else %}
                         bg-gray-100 text-gray-900 rounded-bl-sm
-                    {% endif %}">
+                    {% endif %}"
+                    {% if msg.sender_id == current_user.id %}style="background:#059669;"{% endif %}>
                     {{ msg.body }}
                 </div>
                 <div class="flex items-center gap-1 mt-1
@@ -74,7 +75,7 @@
                     placeholder="Write a message..."
                     class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"></textarea>
                 <button type="submit"
-                    class="bg-emerald-600 text-white px-5 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors self-end py-2">
+                    class="text-white px-5 rounded-lg text-sm font-medium transition-colors self-end py-2" style="background:#059669;">
                     Send
                 </button>
             </div>
@@ -88,6 +89,7 @@ const MY_ID = {{ current_user.id }};
 const CSRF = document.querySelector('[name=csrf_token]').value;
 let lastTimestamp = Date.now() / 1000;
 let seenIds = new Set([{% for msg in messages_list %}{{ msg.id }},{% endfor %}]);
+let pollInterval = null;
 
 function formatLocalTime(utcString) {
     const d = new Date(utcString + ' UTC');
@@ -112,15 +114,15 @@ function appendMessage(msg) {
     wrapper.className = 'flex ' + (msg.is_mine ? 'justify-end' : 'justify-start');
     wrapper.setAttribute('data-msg-id', msg.id);
 
-    const bubbleColor = msg.is_mine
-        ? 'bg-emerald-600 text-white rounded-br-sm'
-        : 'bg-gray-100 text-gray-900 rounded-bl-sm';
-
+    const bubbleStyle = msg.is_mine
+        ? 'background:#059669;color:white;'
+        : 'background:#F3F4F6;color:#111827;';
+    const bubbleRound = msg.is_mine ? 'rounded-br-sm' : 'rounded-bl-sm';
     const localTime = formatLocalTime(msg.timestamp);
 
     wrapper.innerHTML = `
         <div class="max-w-xs lg:max-w-md w-full">
-            <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${bubbleColor}">
+            <div class="px-4 py-2.5 rounded-2xl ${bubbleRound} text-sm leading-relaxed break-words" style="${bubbleStyle}">
                 ${msg.body.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
             </div>
             <div class="flex items-center gap-1 mt-1 ${msg.is_mine ? 'justify-end' : 'justify-start'}">
@@ -144,6 +146,29 @@ async function poll() {
     } catch (e) {}
 }
 
+function startPolling() {
+    if (!pollInterval) {
+        pollInterval = setInterval(poll, 3000);
+    }
+}
+
+function stopPolling() {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+}
+
+// Page Visibility API — stop polling when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopPolling();
+    } else {
+        poll(); // Immediate catch-up when tab becomes visible
+        startPolling();
+    }
+});
+
 async function sendMessage(e) {
     e.preventDefault();
     const body = document.getElementById('reply-body').value.trim();
@@ -152,19 +177,14 @@ async function sendMessage(e) {
     const data = new FormData();
     data.append('csrf_token', CSRF);
     data.append('body', body);
-
     document.getElementById('reply-body').value = '';
 
-    await fetch(`/messages/conversation/${OTHER_ID}`, {
-        method: 'POST',
-        body: data
-    });
-
+    await fetch(`/messages/conversation/${OTHER_ID}`, { method: 'POST', body: data });
     lastTimestamp = Date.now() / 1000 - 2;
     await poll();
 }
 
 scrollToBottom();
-setInterval(poll, 3000);
+startPolling();
 </script>
 {% endblock %}

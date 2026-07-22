@@ -20,6 +20,18 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    @app.template_filter('abbr')
+    def abbr_number(n):
+        if not n: return '0'
+        n = int(n)
+        if n >= 1_000_000:
+            v = n / 1_000_000
+            return f'{int(v)}M' if v == int(v) else f'{v:.1f}M'
+        if n >= 1_000:
+            v = n / 1_000
+            return f'{int(v)}K' if v == int(v) else f'{v:.1f}K'
+        return str(n)
+
     db.init_app(app)
     login_manager.init_app(app)
     cache.init_app(app)

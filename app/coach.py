@@ -104,4 +104,14 @@ def public_view(user_id):
         flash('Coach profile not found.', 'error')
         return redirect(url_for('main.index'))
     coach = user.coach_profile
-    return render_template('coach/public.html', coach=coach, coach_user=user)
+
+    already_messaged = False
+    if current_user.role == 'athlete':
+        from app.models import Message
+        already_messaged = Message.query.filter_by(
+            sender_id=current_user.id,
+            recipient_id=user_id
+        ).first() is not None
+
+    return render_template('coach/public.html', coach=coach, coach_user=user,
+                           already_messaged=already_messaged)

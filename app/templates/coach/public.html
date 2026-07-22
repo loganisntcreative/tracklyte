@@ -7,7 +7,7 @@
     <a href="javascript:history.back()" class="text-sm text-gray-500 hover:text-gray-800 mb-6 inline-block">← Back</a>
 
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
-        <div class="h-24 bg-gradient-to-r from-indigo-600 to-indigo-400 relative">
+        <div class="h-24 relative" style="background: linear-gradient(to right, #4f46e5, #818cf8);">
             <div class="absolute -bottom-8 left-6">
                 {% if coach.photo_url %}
                     <img src="{{ coach.photo_url }}" alt="{{ coach.first_name }}"
@@ -18,24 +18,36 @@
                     </div>
                 {% endif %}
             </div>
-            {% if current_user.role == 'athlete' %}
+            {% if current_user.role == 'athlete' and not already_messaged %}
             <div class="absolute bottom-3 right-4">
                 <a href="/messages/send/{{ coach_user.id }}"
                     class="bg-white text-indigo-700 text-sm px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors shadow-sm">
                     Send message
                 </a>
             </div>
+            {% elif current_user.role == 'athlete' and already_messaged %}
+            <div class="absolute bottom-3 right-4">
+                <a href="/messages"
+                    class="bg-white text-emerald-700 text-sm px-4 py-2 rounded-lg font-medium hover:bg-emerald-50 transition-colors shadow-sm">
+                    View conversation
+                </a>
+            </div>
             {% endif %}
         </div>
+
         <div class="pt-12 px-6 pb-6">
-            <div class="flex items-start justify-between mb-1">
+            <div class="flex items-start justify-between mb-1 flex-wrap gap-2">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">
-                        {{ coach.first_name }} {{ coach.last_name }}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-2xl font-semibold text-gray-900">
+                            {{ coach.first_name }} {{ coach.last_name }}
+                        </h1>
                         {% if coach_user.email.endswith('.edu') %}
-                            <span class="ml-2 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium align-middle">✓ Verified</span>
+                            <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ Verified coach</span>
+                        {% else %}
+                            <span class="text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full font-medium">Unverified</span>
                         {% endif %}
-                    </h1>
+                    </div>
                     <p class="text-sm text-gray-500 mt-0.5">{{ coach.school }}{% if coach.college %} · {{ coach.college }}{% endif %} · {{ coach.state }}</p>
                 </div>
             </div>
@@ -74,13 +86,21 @@
     </div>
 
     {% if current_user.role == 'athlete' %}
-    <div class="bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl p-6 text-center">
-        <p class="text-white font-semibold mb-1">Interested in this program?</p>
-        <p class="text-indigo-200 text-sm mb-4">Send a message to start the conversation.</p>
-        <a href="/messages/send/{{ coach_user.id }}"
-            class="bg-white text-indigo-700 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition-colors inline-block">
-            Send message →
-        </a>
+    <div class="rounded-2xl p-6 text-center" style="background: linear-gradient(to right, #4f46e5, #6366f1);">
+        {% if already_messaged %}
+            <p class="text-white font-semibold mb-1">You've already reached out.</p>
+            <p class="text-sm mb-4" style="color: #c7d2fe;">Check your messages for their response.</p>
+            <a href="/messages" class="bg-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-block transition-colors" style="color:#4f46e5;">
+                View messages →
+            </a>
+        {% else %}
+            <p class="text-white font-semibold mb-1">Interested in this program?</p>
+            <p class="text-sm mb-4" style="color: #c7d2fe;">Send a message to start the conversation.</p>
+            <a href="/messages/send/{{ coach_user.id }}"
+                class="bg-white px-6 py-2.5 rounded-lg text-sm font-semibold inline-block transition-colors" style="color:#4f46e5;">
+                Send message →
+            </a>
+        {% endif %}
     </div>
     {% endif %}
 

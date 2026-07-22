@@ -8,9 +8,7 @@
 
     <!-- Hero card -->
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
-
-        <!-- Banner + avatar -->
-        <div class="h-24 bg-gradient-to-r from-emerald-600 to-emerald-400 relative">
+        <div class="h-24 relative" style="background: linear-gradient(to right, #059669, #34d399);">
             <div class="absolute -bottom-8 left-6">
                 {% if athlete.photo_url %}
                     <img src="{{ athlete.photo_url }}" alt="{{ athlete.first_name }}"
@@ -32,17 +30,11 @@
         </div>
 
         <div class="pt-12 px-6 pb-6">
-            <div class="flex items-start justify-between mb-1">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">{{ athlete.first_name }} {{ athlete.last_name }}</h1>
-                    <p class="text-sm text-gray-500 mt-0.5">{{ athlete.school }} · Class of {{ athlete.grad_year }} · {{ athlete.state }}</p>
-                </div>
-            </div>
-
+            <h1 class="text-2xl font-semibold text-gray-900">{{ athlete.first_name }} {{ athlete.last_name }}</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ athlete.school }} · Class of {{ athlete.grad_year }} · {{ athlete.state }}</p>
             {% if athlete.bio %}
             <p class="text-sm text-gray-600 leading-relaxed mt-3">{{ athlete.bio }}</p>
             {% endif %}
-
             {% if athlete.events %}
             <div class="flex flex-wrap gap-2 mt-4">
                 {% for event in athlete.events.split(',') %}
@@ -53,7 +45,7 @@
         </div>
     </div>
 
-    <!-- Stats bar -->
+    <!-- Best times -->
     {% if grouped_prs %}
     <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-4">
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Best times</p>
@@ -68,10 +60,10 @@
     </div>
     {% endif %}
 
-    <!-- PR chart -->
+    <!-- PR Chart -->
     {% include 'components/pr_chart.html' %}
 
-    <!-- Full PR history -->
+    <!-- Full PR History -->
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
         <div class="px-6 py-4 border-b border-gray-100">
             <h2 class="font-semibold text-gray-900">PR History</h2>
@@ -94,19 +86,19 @@
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xl font-semibold text-gray-900">{{ pr.time_recorded }}</p>
                                 <div class="text-right">
-                                    {% if pr.meet_name %}
-                                        <p class="text-xs text-gray-600 font-medium">{{ pr.meet_name }}</p>
-                                    {% endif %}
-                                    {% if pr.date_achieved %}
-                                        <p class="text-xs text-gray-400">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>
-                                    {% endif %}
+                                    {% if pr.meet_name %}<p class="text-xs text-gray-600 font-medium">{{ pr.meet_name }}</p>{% endif %}
+                                    {% if pr.date_achieved %}<p class="text-xs text-gray-400">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>{% endif %}
                                 </div>
                             </div>
                             {% if pr.media_url %}
                                 {% if pr.media_type == 'video' %}
-                                    <video controls class="w-full rounded-lg max-h-72 bg-black mt-2" src="{{ pr.media_url }}"></video>
+                                    <video controls preload="none"
+                                        class="w-full rounded-lg max-h-72 bg-black mt-2 lazy-video"
+                                        data-src="{{ pr.media_url }}">
+                                    </video>
                                 {% else %}
-                                    <img src="{{ pr.media_url }}" alt="{{ pr.event }}" class="w-full rounded-lg max-h-72 object-cover mt-2">
+                                    <img src="{{ pr.media_url }}" alt="{{ pr.event }}"
+                                        class="w-full rounded-lg max-h-72 object-cover mt-2">
                                 {% endif %}
                             {% endif %}
                             {% include 'components/comments.html' %}
@@ -120,4 +112,23 @@
     </div>
 
 </div>
+
+<script>
+// Lazy load videos with Intersection Observer
+const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const video = entry.target;
+            const src = video.getAttribute('data-src');
+            if (src) {
+                video.src = src;
+                video.removeAttribute('data-src');
+                videoObserver.unobserve(video);
+            }
+        }
+    });
+}, { rootMargin: '200px' });
+
+document.querySelectorAll('video.lazy-video').forEach(v => videoObserver.observe(v));
+</script>
 {% endblock %}

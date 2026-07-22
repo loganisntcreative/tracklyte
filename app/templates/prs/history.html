@@ -10,7 +10,7 @@
             <p class="text-sm text-gray-500 mt-1">{{ total }} entr{{ 'y' if total == 1 else 'ies' }} logged</p>
         </div>
         <a href="/prs/add"
-            class="bg-emerald-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+            class="text-white text-sm px-4 py-2 rounded-lg font-medium transition-colors" style="background:#059669;">
             + Log a PR
         </a>
     </div>
@@ -24,7 +24,7 @@
             </div>
             <p class="text-gray-700 font-medium mb-1">No PRs logged yet</p>
             <p class="text-sm text-gray-400 mb-5">Start tracking your times to get discovered by coaches.</p>
-            <a href="/prs/add" class="bg-emerald-600 text-white text-sm px-5 py-2.5 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+            <a href="/prs/add" class="text-white text-sm px-5 py-2.5 rounded-lg font-medium transition-colors" style="background:#059669;">
                 Log your first PR
             </a>
         </div>
@@ -55,28 +55,25 @@
                                 {% endif %}
                             </div>
                             <div>
-                                {% if pr.meet_name %}
-                                    <p class="text-sm font-medium text-gray-700">{{ pr.meet_name }}</p>
-                                {% endif %}
-                                {% if pr.date_achieved %}
-                                    <p class="text-xs text-gray-400 mt-0.5">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>
-                                {% endif %}
+                                {% if pr.meet_name %}<p class="text-sm font-medium text-gray-700">{{ pr.meet_name }}</p>{% endif %}
+                                {% if pr.date_achieved %}<p class="text-xs text-gray-400 mt-0.5">{{ pr.date_achieved.strftime('%b %d, %Y') }}</p>{% endif %}
                             </div>
                         </div>
                         <form method="POST" action="/prs/delete/{{ pr.id }}"
                             onsubmit="return confirm('Delete this PR?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit"
-                                class="text-xs text-gray-300 hover:text-red-500 transition-colors">
-                                Delete
-                            </button>
+                            <button type="submit" class="text-xs text-gray-300 hover:text-red-500 transition-colors">Delete</button>
                         </form>
                     </div>
                     {% if pr.media_url %}
                         {% if pr.media_type == 'video' %}
-                            <video controls class="w-full rounded-xl max-h-64 bg-black" src="{{ pr.media_url }}"></video>
+                            <video controls preload="none"
+                                class="w-full rounded-xl max-h-64 bg-black lazy-video"
+                                data-src="{{ pr.media_url }}">
+                            </video>
                         {% else %}
-                            <img src="{{ pr.media_url }}" alt="{{ pr.event }} media" class="w-full rounded-xl max-h-64 object-cover">
+                            <img src="{{ pr.media_url }}" alt="{{ pr.event }} media"
+                                class="w-full rounded-xl max-h-64 object-cover">
                         {% endif %}
                     {% endif %}
                     {% include 'components/comments.html' %}
@@ -88,4 +85,22 @@
     {% endif %}
 
 </div>
+
+<script>
+const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const video = entry.target;
+            const src = video.getAttribute('data-src');
+            if (src) {
+                video.src = src;
+                video.removeAttribute('data-src');
+                videoObserver.unobserve(video);
+            }
+        }
+    });
+}, { rootMargin: '200px' });
+
+document.querySelectorAll('video.lazy-video').forEach(v => videoObserver.observe(v));
+</script>
 {% endblock %}
