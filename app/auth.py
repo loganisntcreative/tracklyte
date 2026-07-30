@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter, cache
 from app.models import User
-from app.email import send_verification_email
+# from app.email import send_verification_email
 import secrets
 
 auth = Blueprint('auth', __name__)
@@ -12,10 +12,7 @@ auth = Blueprint('auth', __name__)
 def verified_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_verified:
-            flash('Please verify your email first.', 'error')
-            return redirect(url_for('auth.verify_pending'))
-        return f(*args, **kwargs)
+        return f(*args, **kwargs)  # Verification disabled for now
     return decorated_function
 
 
@@ -39,23 +36,25 @@ def register():
             flash('An account with that email already exists.', 'error')
             return redirect(url_for('auth.register'))
 
-        token = secrets.token_urlsafe(32)
-
         user = User(
             email=email,
             password_hash=generate_password_hash(password),
             role=role,
-            is_verified=False,
-            verification_token=token
+            is_verified=True,
+            verification_token=None
         )
         db.session.add(user)
         db.session.commit()
 
-        send_verification_email(email, token)
+        # token = secrets.token_urlsafe(32)
+        # send_verification_email(email, token)
 
         login_user(user, remember=True)
-        flash('Account created! Check your email to verify your account.', 'success')
-        return redirect(url_for('auth.verify_pending'))
+        flash('Account created! Welcome to TrackLyte.', 'success')
+
+        if role == 'athlete':
+            return redirect(url_for('profile.setup'))
+        return redirect(url_for('coach.setup'))
 
     return render_template('auth/register.html')
 
@@ -67,14 +66,6 @@ def verify(token):
     user.verification_token = None
     db.session.commit()
     return render_template('auth/verified.html')
-
-    user.is_verified = True
-    user.verification_token = None
-    db.session.commit()
-    flash('Email verified! Your account is fully active.', 'success')
-    if user.role == 'athlete':
-        return redirect(url_for('profile.setup'))
-    return redirect(url_for('coach.setup'))
 
 
 @auth.route('/verify-pending')
@@ -92,19 +83,8 @@ def verify_pending():
 def resend_verification():
     if current_user.is_verified:
         return redirect(url_for('main.index'))
-
-    token = secrets.token_urlsafe(32)
-    current_user.verification_token = token
-    db.session.commit()
-
-    success = send_verification_email(current_user.email, token)
-
-    if success:
-        flash('Verification email resent! Check your inbox.', 'success')
-    else:
-        flash('Could not send email. Try again later.', 'error')
-
-    return redirect(url_for('auth.verify_pending'))
+    # Verification disabled — just redirect home
+    return redirect(url_for('main.index'))
 
 
 @auth.route('/login', methods=['GET', 'POST'])
